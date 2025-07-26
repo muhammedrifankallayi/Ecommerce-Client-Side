@@ -101,7 +101,7 @@ const ProductsPage = () => {
       }
 
       const response = await productService.getProducts(apiFilters);
-      setProducts(response.products);
+      setProducts(response.products?response.products:(response as any).data.products);
       setTotalProducts(response.total);
       setCurrentPage(response.page);
       setTotalPages(response.pages);
@@ -296,7 +296,7 @@ const ProductsPage = () => {
         )}
 
         {/* No Results */}
-        {!loading && !error && products.length === 0 && (
+        {!loading && !error && products&&products?.length === 0 && (
           <div className="text-center py-16">
             <div className="bg-card rounded-2xl border border-border p-12 max-w-md mx-auto shadow-sm">
               <Search className="h-16 w-16 text-muted-foreground mx-auto mb-6" />

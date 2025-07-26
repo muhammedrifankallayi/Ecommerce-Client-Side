@@ -15,6 +15,9 @@ import { COMPANY_ID } from "@/services/config";
 import { orderService, CreateOrderPayload } from "@/services/orderService";
 import { toast as sonnerToast } from "sonner";
 import axios from 'axios';
+import { authService } from "@/services";
+import { User } from "@/services/authService";
+import { couponService } from "@/services/couponService";
 
 // Dynamically load Razorpay SDK
 function loadRazorpayScript() {
@@ -68,9 +71,16 @@ const CheckoutPage = () => {
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const[ userDetails, setUserDetails] = useState<User>(null);
 
   useEffect(() => {
     addressService.getAddresses().then(setAddresses);
+    authService.getUserProfile().then((response) => {
+      if (response.success) {
+        setUserDetails(response.data);
+      }
+
+    })
   }, []);
 
   // When an address is selected, auto-fill the form
@@ -94,7 +104,19 @@ const CheckoutPage = () => {
     sum + ((item?.inventoryId?.price ?? 0) * (item?.quantity ?? 1)), 0
   );
   const shipping = computedSubtotal > 50 ? 0 : 5.99;
-  const total = computedSubtotal + shipping;
+  let discountAmount = 0
+  const coupen = userDetails?.discountCoupons?.find(c => c.status === 'active');
+  couponService.getCouponById(coupen?.couponId).then((response) => {
+    if (response) {
+      const coupon = response;
+      if (coupon.discountType === 'percentage') {
+         discountAmount = (computedSubtotal * coupon.discountValue) / 100;
+      } else if (coupon.discountType === 'fixed') {
+        discountAmount = coupon.discountValue;
+      }
+    }
+  });
+  const total = computedSubtotal + shipping - discountAmount;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

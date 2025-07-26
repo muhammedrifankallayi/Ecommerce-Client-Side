@@ -47,14 +47,14 @@ const SearchBar = ({ onSearch, placeholder = "Search for products...", className
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyPress={handleKeyPress}
           placeholder={placeholder}
-          className="pl-4 pr-10 py-2 w-full border-2 border-gray-200 rounded-l-md focus:border-shop-primary focus:ring-0"
+          className="pl-4 pr-10 py-2 w-full border-2 border-gray-200 rounded-none focus:outline-none focus:ring-0"
         />
         {searchQuery && (
           <Button
             variant="ghost"
             size="sm"
             onClick={clearSearch}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 h-6 w-6"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 h-6 w-6 rounded-none focus:outline-none focus:ring-0"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -62,7 +62,7 @@ const SearchBar = ({ onSearch, placeholder = "Search for products...", className
       </div>
       <Button
         onClick={handleSearch}
-        className="bg-shop-primary hover:bg-shop-primary/90 text-white px-4 py-2 rounded-r-md border-2 border-shop-primary"
+        className="bg-shop-primary hover:bg-shop-primary/90 text-white border-2 border-shop-primary rounded-none focus:outline-none focus:ring-0"
       >
         <Search className="h-4 w-4" />
       </Button>

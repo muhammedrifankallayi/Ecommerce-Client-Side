@@ -28,6 +28,10 @@ export interface User {
     postalCode: string;
     country: string;
   };
+  discountCoupons:Array<{
+    couponId: string;
+    status: 'active' | 'claimed' | 'expired' | 'inactive';
+  }>
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
