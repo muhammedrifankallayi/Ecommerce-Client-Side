@@ -72,10 +72,14 @@ const ProductCard = ({ product }: ProductCardProps) => {
         <div className="flex items-center mt-1 mb-2">
           <div className="flex items-center">
             <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400 fill-yellow-400" />
-            <span className="ml-1 text-xs sm:text-sm font-medium">4.5</span>
+            <span className="ml-1 text-xs sm:text-sm font-medium">
+              {product.rating ? product.rating.toFixed(1) : '0.0'}
+            </span>
           </div>
           <span className="mx-2 text-gray-300">|</span>
-          <span className="text-xs sm:text-sm text-gray-600">10 reviews</span>
+          <span className="text-xs sm:text-sm text-gray-600">
+            {product.reviews || 0} reviews
+          </span>
         </div>
         
         <p className="text-gray-600 text-xs sm:text-sm mb-2 line-clamp-2">{product.description}</p>

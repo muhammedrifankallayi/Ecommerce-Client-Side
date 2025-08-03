@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Filter, Search, Loader2 } from 'lucide-react';
 import ProductGrid from '@/components/ProductGrid';
@@ -10,6 +10,7 @@ import { Product } from '@/types';
 import { ProductFilters } from '@/types/api';
 import { transformProducts } from '@/lib/productUtils';
 import { Button } from '@/components/ui/button';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { 
   Select,
   SelectContent,
@@ -25,10 +26,12 @@ const ProductsPage = () => {
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalProducts, setTotalProducts] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const page = 1; // Move declaration here to avoid block-scoped variable error
 
   const maxPrice = 1000; // Default max price, will be updated when products load
@@ -44,9 +47,13 @@ const ProductsPage = () => {
   });
 
   // Fetch products from API
-  const fetchProducts = async (page: number = 1) => {
+  const fetchProducts = async (page: number = 1, append: boolean = false) => {
     try {
-      setLoading(true);
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
       setError(null);
       
       const apiFilters: ProductFilters = {
@@ -101,22 +108,44 @@ const ProductsPage = () => {
       }
 
       const response = await productService.getProducts(apiFilters);
-      setProducts(response.products?response.products:(response as any).data.products);
+      const rawProducts = response.products || (response as any).data.products;
+      const newProducts = transformProducts(rawProducts);
+      
+      if (append) {
+        setProducts(prev => [...prev, ...newProducts]);
+      } else {
+        setProducts(newProducts);
+      }
+      
       setTotalProducts(response.total);
       setCurrentPage(response.page);
       setTotalPages(response.pages);
+      setHasMore(response.page < response.pages);
     } catch (err) {
       console.error('Error fetching products:', err);
       setError('Failed to load products. Please try again.');
     } finally {
-      setLoading(false);
+      if (append) {
+        setLoadingMore(false);
+      } else {
+        setLoading(false);
+      }
     }
   };
 
   // Fetch products when filters, search, or sort changes
   useEffect(() => {
-    fetchProducts(1);
+    setCurrentPage(1);
+    setHasMore(true);
+    fetchProducts(1, false);
   }, [searchQuery, filters, sort]);
+
+  // Load more products function for infinite scroll
+  const loadMoreProducts = useCallback(() => {
+    if (hasMore && !loadingMore && !loading) {
+      fetchProducts(currentPage + 1, true);
+    }
+  }, [hasMore, loadingMore, loading, currentPage]);
 
   // Update URL params based on search and filters
   useEffect(() => {
@@ -152,7 +181,17 @@ const ProductsPage = () => {
       inStock: false
     });
     setSearchQuery('');
+    setCurrentPage(1);
+    setHasMore(true);
   };
+
+  // Initialize infinite scroll
+  const loadingRef = useInfiniteScroll({
+    onLoadMore: loadMoreProducts,
+    hasMore,
+    loading: loadingMore,
+    threshold: 200
+  });
 
   const activeFilterCount = 
     filters.categories.length + 
@@ -264,32 +303,24 @@ const ProductsPage = () => {
           <>
             <ProductGrid products={products} sort={sort} />
             
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center mt-8">
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fetchProducts(currentPage - 1)}
-                    disabled={currentPage === 1}
-                  >
-                    Previous
-                  </Button>
-                  
-                  <span className="text-sm text-muted-foreground">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fetchProducts(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                  >
-                    Next
-                  </Button>
-                </div>
+            {/* Infinite Scroll Loading Indicator */}
+            {hasMore && (
+              <div ref={loadingRef} className="flex justify-center mt-8 py-4">
+                {loadingMore && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Loading more products...</span>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* End of results indicator */}
+            {!hasMore && products.length > 0 && (
+              <div className="text-center mt-8 py-4">
+                <p className="text-muted-foreground">
+                  You've reached the end of the results
+                </p>
               </div>
             )}
           </>
