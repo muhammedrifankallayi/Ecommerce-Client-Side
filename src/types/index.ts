@@ -44,6 +44,15 @@ export interface Product {
   updatedAt: string;
   isActive?: boolean;
   slug?: string;
+  // Frontend compatibility properties
+  id?: string; // Alias for _id
+  image?: string; // Main image URL
+  inStock?: boolean; // Calculated stock status
+  colorName?: string; // Color name
+  rating?: number; // Product rating
+  reviews?: number; // Number of reviews
+  featured?: boolean; // Featured status
+  sizes?: string[]; // Available sizes
 }
 
 export interface ProductWithInventory extends Product {
