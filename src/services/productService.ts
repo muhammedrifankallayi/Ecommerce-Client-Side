@@ -9,7 +9,8 @@ function isAuthenticated() {
 }
 
 export interface ProductWithInventory extends Product {
-  inventories: Inventory[];
+  success: boolean;
+  data: Product;
 }
 
 export interface ProductsResponse {

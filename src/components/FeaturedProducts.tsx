@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import ProductCard from './ProductCard';
-import { productService } from '@/services/productService';
 import { Product } from '@/types';
-import { transformProducts } from '@/lib/productUtils';
 import { ArrowRight, Filter, Loader2 } from 'lucide-react';
+import { landingUiService } from '@/services/landingUiService';
 
-const FeaturedProducts = () => {
+const FeaturedProducts = ({featuredProducts}) => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,31 +21,24 @@ const FeaturedProducts = () => {
   ];
 
   // Fetch featured products
-  useEffect(() => {
-    const fetchFeaturedProducts = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Fetch featured products from API
-        const featuredProducts = await productService.getFeaturedProducts();
-        const transformedProducts = transformProducts(featuredProducts);
-        setProducts(transformedProducts);
-      } catch (err) {
-        console.error('Error fetching featured products:', err);
-        setError('Failed to load featured products');
-      } finally {
-        setLoading(false);
-      }
-    };
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await landingUiService.getLandingUi();
+                
+                setProducts(response.data.featuredProducts);
+                setLoading(false);
+            } catch (error) {
+                console.error("Error fetching categories:", error);
+                setLoading(false);
+            }
+        };
 
-    fetchFeaturedProducts();
-  }, []);
+        fetchCategories();
+    }
+    , []);
 
-  const filteredProducts = products
-    .filter(p => p.featured)
-    .filter(p => activeCategory === 'all' || p.category?.name === activeCategory)
-    .slice(0, 8);
+  const filteredProducts = products.slice(0, 8)
 
   return (
     <section className="py-20 lg:py-32 bg-gradient-to-br from-background to-secondary/50">
@@ -100,7 +92,7 @@ const FeaturedProducts = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-8 mb-8 sm:mb-12 px-4 sm:px-0">
             {filteredProducts.map((product, index) => (
               <div 
-                key={product.id || product._id} 
+                key={product._id} 
                 className="scale-hover"
                 style={{ 
                   animationDelay: `${index * 100}ms`,

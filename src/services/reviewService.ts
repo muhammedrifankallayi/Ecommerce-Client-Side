@@ -79,9 +79,10 @@ class ReviewService {
   }
 
   // Get reviews for a product (with pagination)
-  async getProductReviews(productId: string, page = 1, limit = 10, sort = '-createdAt'): Promise<ReviewListResponse> {
+  async getProductReviews(productId: string, page = 1, limit = 10, sort = '-createdAt', isAuthenticated = false): Promise<ReviewListResponse> {
     const params = new URLSearchParams({ page: page.toString(), limit: limit.toString(), sort });
-    return apiService.get(`/api/reviews/product/${productId}?${params.toString()}`);
+    const endpoint = isAuthenticated ? '/api' : '/api/public';
+    return apiService.get(`${endpoint}/reviews/product/${productId}?${params.toString()}`);
   }
 
   // Mark review as helpful

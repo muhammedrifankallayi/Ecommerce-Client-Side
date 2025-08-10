@@ -102,12 +102,12 @@ class AuthService {
 
   // Get user profile
   async getUserProfile(): Promise<ProfileResponse> {
-    return apiService.get('/users/profile/me');
+    return apiService.get('/api/users/profile/me');
   }
 
   // Update user profile
   async updateProfile(data: UpdateProfileData): Promise<ProfileResponse> {
-    return apiService.put('/users/profile/me', data);
+    return apiService.put('/api/users/profile/me', data);
   }
 }
 

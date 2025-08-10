@@ -93,6 +93,14 @@ class CouponService {
     const response = await api.post(`${this.baseUrl}/validate`, validationData);
     return response.data.data;
   }
+
+  /**
+   * Remove an applied coupon by ID
+   */
+  async removeAppliedCoupon(couponId: string): Promise<void> {
+   const response =  await api.delete(`${this.baseUrl}/user/${couponId}`);
+    return response.data
+  }
 }
 
 export const couponService = new CouponService();

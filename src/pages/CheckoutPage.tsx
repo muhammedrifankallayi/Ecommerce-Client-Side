@@ -105,8 +105,8 @@ const CheckoutPage = () => {
   );
   const shipping = computedSubtotal > 50 ? 0 : 5.99;
   let discountAmount = 0
-  const coupen = userDetails?.discountCoupons?.find(c => c.status === 'active');
-  couponService.getCouponById(coupen?.couponId).then((response) => {
+  const coupenActive = userDetails?.discountCoupons?.find(c => c.status === 'active');
+  couponService.getCouponById(coupenActive?.couponId).then((response) => {
     if (response) {
       const coupon = response;
       if (coupon.discountType === 'percentage') {
@@ -199,7 +199,9 @@ const CheckoutPage = () => {
               paymentMethod: "razorpay",
               taxPrice: 0,
               shippingPrice: parseFloat(shipping.toFixed(2)),
-              totalPrice: parseFloat((computedSubtotal + shipping).toFixed(2))
+              totalPrice: parseFloat((computedSubtotal + shipping).toFixed(2)),
+              coupenId:coupenActive?.couponId,
+              discountAmount: discountAmount,
             };
 
             const orderResponse = await orderService.createOrder(orderPayload);

@@ -11,6 +11,8 @@ export interface CreateOrderPayload {
   taxPrice: number;
   shippingPrice: number;
   totalPrice: number;
+  coupenId?:string;
+  discountAmount?: number;
 }
 
 export interface OrdersListResponse {

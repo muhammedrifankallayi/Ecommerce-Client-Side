@@ -69,7 +69,7 @@ export interface Cart {
 
 export interface ProductFilters {
   page?: number;
-  limit?: number;
+  size?: number;
   search?: string;
   category?: string;
   brand?: string;
@@ -77,6 +77,7 @@ export interface ProductFilters {
   maxPrice?: number;
   sort?: string;
   inStock?: boolean;
+  active?: number; // 1 for active, 0 for inactive
 }
 
 export interface OrderFilters {

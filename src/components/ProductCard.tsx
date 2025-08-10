@@ -22,7 +22,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const displayPrice = defaultInventory?.price || product.price || 0;
 
   // Check if product is in stock
-  const hasStock = defaultInventory ? defaultInventory.stock > 0 : (product.stock ?? 0) > 0;
+  const hasStock = defaultInventory ? defaultInventory.totalStock > 0 : (product.totalStock ?? 0) > 0;
   
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -31,7 +31,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
   };
 
   // Get the first product image or placeholder
-  const productImage = product.images[0] || '/placeholder.svg';
+ const productImage = product?.images?.[0] || '/placeholder.svg';
   const imageUrl = productImage.startsWith('http') ? productImage : `${BASE_URL}/${productImage.replace(/^\//, '')}`;
   
   return (

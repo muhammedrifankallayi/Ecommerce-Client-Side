@@ -51,7 +51,7 @@ const ProductDetailPage = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   
-  const [product, setProduct] = useState<ProductWithInventory | null>(null);
+  const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
@@ -117,10 +117,14 @@ const ProductDetailPage = () => {
         
         // Fetch product by ID
         const productData = await productService.getProductById(id);
-        if (!productData) throw new Error('Product not found');
+        console.log(productData,"DATA");
+        
+        if (!productData.success) throw new Error('Product not found');
         
         // Get unique variants from inventories
-        const variants = getUniqueVariants(productData.inventories || []);
+        const variants = getUniqueVariants(productData?.data?.inventories || []);
+        console.log(variants, "VARIANTS");
+        
         setAvailableVariants(variants);
         
         // Initialize with first available option for each variant type
@@ -132,7 +136,7 @@ const ProductDetailPage = () => {
         });
         setSelectedVariants(initialVariants);
         
-        setProduct(productData);
+        setProduct(productData.data);
         
         // Fetch related products (same category)
         if (productData.category?._id) {
@@ -186,7 +190,7 @@ const ProductDetailPage = () => {
     if (!id) return;
     try {
       setReviewsLoading(true);
-      const response = await reviewService.getProductReviews(id, page, 10, '-createdAt');
+      const response = await reviewService.getProductReviews(id, page, 10, '-createdAt', isAuthenticated);
       if (response && response.success && response.data) {
         setReviews(response.data.reviews || []);
         setReviewStats(response.data.stats || { averageRating: 0, totalReviews: 0 });

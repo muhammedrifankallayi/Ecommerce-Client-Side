@@ -1,4 +1,3 @@
-
 import { useMemo } from 'react';
 import ProductCard from './ProductCard';
 import { Product } from '@/types';
@@ -7,9 +6,10 @@ interface ProductGridProps {
   products: Product[];
   filter?: string;
   sort?: string;
+  lastProductRef?: (node: HTMLDivElement | null) => void;
 }
 
-const ProductGrid = ({ products, filter, sort }: ProductGridProps) => {
+const ProductGrid = ({ products, filter, sort, lastProductRef }: ProductGridProps) => {
   const filteredAndSortedProducts = useMemo(() => {
     let result = [...products];
     
@@ -36,7 +36,7 @@ const ProductGrid = ({ products, filter, sort }: ProductGridProps) => {
           break;
         case 'popular':
           // Sort by a combination of rating and sales (simulated using stock)
-          result.sort((a, b) => (b.rating * 20 + (b.stock > 50 ? 100 : b.stock)) - (a.rating * 20 + (a.stock > 50 ? 100 : a.stock)));
+          result.sort((a, b) => (b.rating * 20 + (b.totalStock > 50 ? 100 : b.totalStock)) - (a.rating * 20 + (a.totalStock > 50 ? 100 : a.totalStock)));
           break;
         case 'relevance':
         default:
@@ -58,9 +58,19 @@ const ProductGrid = ({ products, filter, sort }: ProductGridProps) => {
   
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6 px-4 sm:px-0">
-      {filteredAndSortedProducts.map(product => (
-        <ProductCard key={product.id} product={product} />
-      ))}
+      {filteredAndSortedProducts.map((product, index) => {
+        // Attach ref to the last product for infinite loading
+        const isLastProduct = filteredAndSortedProducts.length === index + 1;
+        
+        return (
+          <div 
+            key={product._id}
+            ref={isLastProduct && lastProductRef ? lastProductRef : null}
+          >
+            <ProductCard product={product} />
+          </div>
+        );
+      })}
     </div>
   );
 };

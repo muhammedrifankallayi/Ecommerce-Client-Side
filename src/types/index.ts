@@ -21,6 +21,7 @@ export interface Inventory {
   location?: string;
   createdAt: string;
   updatedAt: string;
+  totalStock?: number; // Total stock across all variants
 }
 
 export interface Product {
@@ -29,7 +30,6 @@ export interface Product {
   description: string;
   images: string[];
   price?: number;
-  stock?: number;
   category?: {
     _id: string;
     name: string;
@@ -44,6 +44,8 @@ export interface Product {
   updatedAt: string;
   isActive?: boolean;
   slug?: string;
+  rating?: number;
+  totalStock?:number
 }
 
 export interface ProductWithInventory extends Product {

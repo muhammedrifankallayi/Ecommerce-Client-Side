@@ -13,5 +13,6 @@ export const ENDPOINTS = {
   wishlist: "/api/wishlist",
   reviews: "/api/reviews",
   brands: "/api/brands",
-  variants: "/api/variants"
+  variants: "/api/variants",
+  landingUi: "/api/front-config",
 }; 

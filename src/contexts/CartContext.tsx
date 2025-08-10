@@ -5,10 +5,25 @@ import { CartItem } from '@/types/api';
 import { useAuth } from './AuthContext';
 import { toast } from "@/components/ui/use-toast";
 
+interface CartSummary {
+  itemCount: number;
+  totalAmount: number;
+}
+
+// Define the shape of the API responses
+interface CartApiResponse {
+  success: boolean;
+  data?: {
+    items: CartItem[];
+  };
+  message?: string;
+}
+
 interface CartContextType {
   items: CartItem[];
   loading: boolean;
   error: string | null;
+  cartSummary: CartSummary;
   addToCart: (productId: string, quantity: number, inventoryId: string) => Promise<void>;
   removeItem: (itemId: string) => Promise<void>;
   updateQuantity: (itemId: string, quantity: number) => Promise<void>;
@@ -23,6 +38,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const cartSummary = {
+    itemCount: items.reduce((total, item) => total + (item.quantity || 0), 0),
+    totalAmount: items.reduce((total, item) => total + ((item.quantity || 0) * (item.inventoryId?.price || 0)), 0)
+  };
+
   // Fetch cart items on mount and when auth state changes
   useEffect(() => {
     if (isAuthenticated) {
@@ -36,7 +56,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       setError(null);
-      const response = await cartService.getCart();
+      const response = await cartService.getCart() as CartApiResponse;
       setItems(response.data?.items || []);
     } catch (err) {
       console.error('Error fetching cart:', err);
@@ -60,7 +80,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       setError(null);
-      const response = await cartService.addToCart(productId, quantity, inventoryId);
+      const response = await cartService.addToCart(productId, quantity, inventoryId) as CartApiResponse;
       if (response.success) {
         toast({
           title: "Item added",
@@ -158,6 +178,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         items,
         loading,
         error,
+        cartSummary,
         addToCart,
         removeItem,
         updateQuantity,

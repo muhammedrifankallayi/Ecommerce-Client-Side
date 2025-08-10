@@ -1,6 +1,6 @@
 
 import { Link, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, ListOrdered, Loader2 } from 'lucide-react';
@@ -14,13 +14,58 @@ import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { BASE_URL } from '@/services/config';
+import { couponService } from '@/services/couponService';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { CartItem } from '@/types/api';
+import { authService } from '@/services';
 
 const CartPage = () => {
   const { items, loading, error, removeItem, updateQuantity, clearCart } = useCart();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("cart");
+  const [couponInput, setCouponInput] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
+  const [removeCouponId, setRemoveCouponId] = useState<string | null>(null);
+
+useEffect(()=>{
+getCartDiscounts();
+},[discountAmount])
+
+  // Coupon apply handle
+  const handleApplyCoupon = async () => {
+    setCouponLoading(true);
+    setCouponError(null);
+    setCouponSuccess(null);
+    try {
+      const res = await couponService.validateCoupon({
+        code: couponInput.trim(),
+        purchaseAmount: computedSubtotal
+      });
+      setAppliedCoupon(res.coupon);
+      setDiscountAmount(res.discountAmount);
+      setCouponSuccess(`Coupon applied! You saved $${res.discountAmount}`);
+    } catch (err: any) {
+      setCouponError(err?.response?.data?.message || 'Invalid or expired coupon');
+      setAppliedCoupon(null);
+      setDiscountAmount(0);
+    } finally {
+      setCouponLoading(false);
+    }
+  };
   
   const handleQuantityDecrease = async (itemId: string, currentQuantity: number) => {
     if (currentQuantity > 1) {
@@ -45,6 +90,48 @@ const CartPage = () => {
     itemCount: items.length
   };
 
+  const getCartDiscounts = async () => {
+    try {
+      const userResponse = await authService.getUserProfile();
+      const activeCoupon = (userResponse as any)?.discountCoupons.find(c => c.status === 'active' && c.couponId);
+      console.log(userResponse,"ACTIVE COUPON");
+      
+      
+      if (activeCoupon?.couponId) {
+        try {
+          const couponResponse = await couponService.getCouponById(activeCoupon.couponId);
+          if (couponResponse) {
+            const coupon = couponResponse;
+            let calculatedDiscount = 0;
+            
+            if (coupon.discountType === 'percentage') {
+              calculatedDiscount = (cartSummary.subtotal * coupon.discountValue) / 100;
+            } else {
+              calculatedDiscount = coupon.discountValue;
+            }
+            
+            setDiscountAmount(calculatedDiscount);
+            setAppliedCoupon(coupon);
+            setCouponSuccess(`Coupon applied! You saved $${calculatedDiscount.toFixed(2)}`);
+          }
+        } catch (err) {
+          console.error('Error fetching coupon:', err);
+          setCouponError('Failed to apply coupon');
+          setDiscountAmount(0);
+          setAppliedCoupon(null);
+        }
+      } else {
+        setDiscountAmount(0);
+        setAppliedCoupon(null);
+      }
+    } catch (err) {
+      console.error('Error fetching user profile:', err);
+      setCouponError('Failed to fetch user coupons');
+      setDiscountAmount(0);
+      setAppliedCoupon(null);
+    }
+  }
+
   // Helper to compute image URL for a cart item
   const getCartItemImageUrl = (item: CartItem) => {
     let imageUrl = item.inventoryId?.productId?.images?.[0] || '/placeholder.svg';
@@ -53,6 +140,30 @@ const CartPage = () => {
     }
     return imageUrl;
   };
+
+
+  const hadleCoupenRemove = async (couponId: string) => {
+          
+    try {
+      
+
+     await couponService.removeAppliedCoupon(couponId).then((res:any)=>{
+                if(res.success){
+                  setAppliedCoupon(null);
+                  setDiscountAmount(0);
+                  setCouponInput("");
+                  setCouponSuccess("Coupon removed successfully");
+                }
+     });
+      
+    } catch (error) {
+      console.error('Error removing coupon:', error);
+      setCouponError('Failed to remove coupon');
+      
+    }
+
+
+  }
 
   // If user is not authenticated, show login prompt
   if (!isAuthenticated) {
@@ -101,7 +212,7 @@ const CartPage = () => {
   // Compute totals
   const computedSubtotal = cartSummary.subtotal;
   const shipping = computedSubtotal > 50 ? 0 : 5.99;
-  const total = computedSubtotal + shipping;
+  const total = computedSubtotal + shipping - discountAmount;
   
   return (
     <div className="container mx-auto px-4 py-4 sm:py-8 max-w-7xl">
@@ -337,14 +448,81 @@ const CartPage = () => {
                     </div>
                     
                     <div className="pt-3 sm:pt-4 space-y-3 sm:space-y-4">
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <Input 
-                          placeholder="Enter coupon code" 
-                          className="flex-1 text-sm"
-                        />
-                        <Button variant="outline" size="sm" className="sm:px-4">
-                          Apply
-                        </Button>
+                      <div className="flex flex-col gap-2">
+                        {appliedCoupon ? (
+                          <div className="flex flex-col gap-2 p-3 bg-muted/50 rounded-lg">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <div className="text-sm font-medium text-green-600">{appliedCoupon.code}</div>
+                                <div className="text-xs">
+                                  Discount applied: <span className="font-bold text-green-600">-${discountAmount.toFixed(2)}</span>
+                                </div>
+                              </div>
+                              <AlertDialog open={removeCouponId === appliedCoupon._id}>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  className="text-destructive hover:text-destructive"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setRemoveCouponId(appliedCoupon._id);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Remove Coupon</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to remove this coupon? This will affect your total order amount.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel onClick={() => setRemoveCouponId(null)}>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction 
+                                      onClick={() => {
+                                        if (removeCouponId) {
+                                          hadleCoupenRemove(removeCouponId);
+                                          setRemoveCouponId(null);
+                                        }
+                                      }}
+                                      className="bg-destructive hover:bg-destructive/90"
+                                    >
+                                      Remove
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <Input 
+                              placeholder="Enter coupon code" 
+                              className="flex-1 text-sm"
+                              value={couponInput}
+                              onChange={e => setCouponInput(e.target.value)}
+                              disabled={couponLoading}
+                            />
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="sm:px-4"
+                              onClick={handleApplyCoupon}
+                              disabled={couponLoading || !couponInput.trim()}
+                            >
+                              {couponLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Apply'}
+                            </Button>
+                          </div>
+                        )}
+                        
+                        {couponSuccess && !appliedCoupon && (
+                          <div className="text-green-600 text-xs font-semibold bg-green-50 p-2 rounded-md">{couponSuccess}</div>
+                        )}
+                        {couponError && (
+                          <div className="text-red-600 text-xs font-medium">{couponError}</div>
+                        )}
                       </div>
                       
                       <Button 
