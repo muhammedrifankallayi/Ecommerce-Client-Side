@@ -20,7 +20,7 @@ const ChatSupportPage = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      text: "Hello! I'm Sarah from EcoShop support. How can I help you today?",
+      text: "Hello! I'm Sarah from E-Devarcus support. How can I help you today?",
       sender: "agent",
       timestamp: new Date(Date.now() - 60000),
       status: "read"
@@ -70,7 +70,7 @@ const ChatSupportPage = () => {
   const getAgentResponse = (userMessage: string): string => {
     const msg = userMessage.toLowerCase();
     if (msg.includes("order") || msg.includes("track")) {
-      return "I can help you track your order. Could you please provide your order number? It usually starts with #EC followed by numbers.";
+      return "I can help you track your order. Could you please provide your order number? It usually starts with #ED followed by numbers.";
     } else if (msg.includes("return") || msg.includes("refund")) {
       return "I'll be happy to help with your return. Our return policy allows returns within 30 days. What item would you like to return?";
     } else if (msg.includes("payment") || msg.includes("card")) {
@@ -88,7 +88,7 @@ const ChatSupportPage = () => {
 
   const quickReplies = [
     "Track my order",
-    "Return a product", 
+    "Return a product",
     "Payment issue",
     "Delivery problem",
     "Account help"
@@ -151,17 +151,15 @@ const ChatSupportPage = () => {
                   )}
                   <div className={`space-y-1`}>
                     <div
-                      className={`rounded-lg px-3 py-2 ${
-                        message.sender === "user"
+                      className={`rounded-lg px-3 py-2 ${message.sender === "user"
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted"
-                      }`}
+                        }`}
                     >
                       <p className="text-sm">{message.text}</p>
                     </div>
-                    <div className={`flex items-center gap-1 text-xs text-muted-foreground ${
-                      message.sender === "user" ? "justify-end" : ""
-                    }`}>
+                    <div className={`flex items-center gap-1 text-xs text-muted-foreground ${message.sender === "user" ? "justify-end" : ""
+                      }`}>
                       <span>{formatTime(message.timestamp)}</span>
                       {message.sender === "user" && message.status && (
                         <Badge variant="outline" className="text-xs h-4">
@@ -237,7 +235,7 @@ const ChatSupportPage = () => {
                   <Smile className="h-4 w-4" />
                 </Button>
               </div>
-              <Button 
+              <Button
                 onClick={handleSendMessage}
                 disabled={!newMessage.trim()}
                 size="sm"

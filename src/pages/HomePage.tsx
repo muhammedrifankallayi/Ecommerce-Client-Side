@@ -11,30 +11,41 @@ import { useEffect, useState } from 'react';
 const HomePage = () => {
 
   const [categories, setCategories] = useState([]);
-  const [featuredProducts,setFeaturedProducts] = useState([]);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-      useEffect(() => {
-          const fetchCategories = async () => {
-              try {
-                  const response = await landingUiService.getLandingUi();
-                  console.log(response);
-                  
-                  setCategories(response.data.categories);
-                  setFeaturedProducts(response.data.featuredProducts);
-              } catch (error) {
-                  console.error("Error fetching categories:", error);
-              }
-          };
-  
-          fetchCategories();
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await landingUiService.getLandingUi();
+        if (response.success && response.data) {
+          setCategories(response.data.categories || []);
+          setFeaturedProducts(response.data.featuredProducts || []);
+        }
+      } catch (error) {
+        console.error("Error fetching landing data:", error);
+      } finally {
+        setLoading(false);
       }
-      , []);
+    };
+
+    fetchData();
+  }, []);
+
   return (
     <div className="w-full overflow-hidden">
       <ModernHero />
       <StatsSection />
-      <CategoryListing   category={categories}  />
-      <FeaturedProducts  featuredProducts={featuredProducts} />
+
+      {categories && categories.length > 0 && (
+        <CategoryListing category={categories} />
+      )}
+
+      {featuredProducts && featuredProducts.length > 0 && (
+        <FeaturedProducts featuredProducts={featuredProducts} />
+      )}
+
       <TestimonialsSection />
       <NewsletterSection />
     </div>

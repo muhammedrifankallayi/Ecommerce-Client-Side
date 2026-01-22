@@ -13,6 +13,7 @@ interface SearchBarProps {
 
 const SearchBar = ({ onSearch, placeholder = "Search for products...", className }: SearchBarProps) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
   const navigate = useNavigate();
 
   const handleSearch = () => {
@@ -39,33 +40,35 @@ const SearchBar = ({ onSearch, placeholder = "Search for products...", className
   };
 
   return (
-    <div className={`relative flex items-center w-full max-w-2xl ${className}`}>
-      <div className="relative flex-1">
+    <div className={`relative flex items-center w-full transition-all duration-500 ${className}`}>
+      <div
+        className={`relative flex items-center w-full group transition-all duration-500 rounded-2xl overflow-hidden border ${isFocused ? 'bg-white border-black/10 shadow-xl shadow-black/[0.02]' : 'bg-black/[0.03] border-transparent'
+          }`}
+      >
+        <div className="pl-4 text-black/30 group-focus-within:text-black/60 transition-colors">
+          <Search className="h-5 w-5" />
+        </div>
+
         <Input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
           onKeyPress={handleKeyPress}
           placeholder={placeholder}
-          className="pl-4 pr-10 py-2 w-full border-2 border-gray-200 rounded-none focus:outline-none focus:ring-0"
+          className="bg-transparent border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-black/30 text-base h-12 w-full pl-3 pr-10 font-medium"
         />
+
         {searchQuery && (
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
             onClick={clearSearch}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 h-6 w-6 rounded-none focus:outline-none focus:ring-0"
+            className="absolute right-3 p-1 rounded-full bg-black/5 hover:bg-black/10 transition-all text-black/40"
           >
             <X className="h-4 w-4" />
-          </Button>
+          </button>
         )}
       </div>
-      <Button
-        onClick={handleSearch}
-        className="bg-shop-primary hover:bg-shop-primary/90 text-white border-2 border-shop-primary rounded-none focus:outline-none focus:ring-0"
-      >
-        <Search className="h-4 w-4" />
-      </Button>
     </div>
   );
 };

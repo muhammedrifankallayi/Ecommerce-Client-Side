@@ -9,8 +9,8 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">EcoShop</h3>
-            <p className="text-gray-600 mb-4">Sustainable and eco-friendly products for a better planet.</p>
+            <h3 className="text-lg font-semibold mb-4">E-Devarcus</h3>
+            <p className="text-gray-600 mb-4">Premium destination for high-quality products.</p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-600 hover:text-shop-primary transition-colors">
                 <Facebook className="h-5 w-5" />
@@ -23,7 +23,7 @@ const Footer = () => {
               </a>
             </div>
           </div>
-          
+
           {/* Shop Links */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Shop</h3>
@@ -42,7 +42,7 @@ const Footer = () => {
               </li>
             </ul>
           </div>
-          
+
           {/* Customer Service */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Customer Service</h3>
@@ -61,7 +61,7 @@ const Footer = () => {
               </li>
             </ul>
           </div>
-          
+
           {/* Newsletter */}
           <div>
             <h3 className="text-lg font-semibold mb-4">Newsletter</h3>
@@ -78,10 +78,10 @@ const Footer = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="border-t border-gray-200 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-600 text-sm">&copy; 2025 EcoShop. All rights reserved.</p>
+            <p className="text-gray-600 text-sm">&copy; {new Date().getFullYear()} E-Devarcus. All rights reserved.</p>
             <div className="flex space-x-6 mt-4 md:mt-0">
               <a href="#" className="text-gray-600 hover:text-shop-primary text-sm transition-colors">Privacy Policy</a>
               <a href="#" className="text-gray-600 hover:text-shop-primary text-sm transition-colors">Terms of Service</a>

@@ -41,9 +41,17 @@ const CartPage = () => {
   const [discountAmount, setDiscountAmount] = useState<number>(0);
   const [removeCouponId, setRemoveCouponId] = useState<string | null>(null);
 
-useEffect(()=>{
-getCartDiscounts();
-},[discountAmount])
+  const cartSummary = {
+    totalItems: items.reduce((sum, item) => sum + (item?.quantity || 0), 0),
+    subtotal: items.reduce((sum, item) => sum + ((item?.inventoryId?.price || 0) * (item?.quantity || 0)), 0),
+    itemCount: items.length
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      getCartDiscounts();
+    }
+  }, [isAuthenticated, cartSummary.subtotal]);
 
   // Coupon apply handle
   const handleApplyCoupon = async () => {
@@ -66,50 +74,45 @@ getCartDiscounts();
       setCouponLoading(false);
     }
   };
-  
+
   const handleQuantityDecrease = async (itemId: string, currentQuantity: number) => {
     if (currentQuantity > 1) {
       await updateQuantity(itemId, currentQuantity - 1);
     }
   };
-  
+
   const handleQuantityIncrease = async (itemId: string, currentQuantity: number, maxStock: number) => {
     if (currentQuantity < maxStock) {
       await updateQuantity(itemId, currentQuantity + 1);
     }
   };
-  
+
   const handleCheckout = () => {
     navigate('/checkout');
   };
 
-  // Calculate cart summary
-  const cartSummary = {
-    totalItems: items.reduce((sum, item) => sum + (item?.quantity || 0), 0),
-    subtotal: items.reduce((sum, item) => sum + ((item?.inventoryId?.price || 0) * (item?.quantity || 0)), 0),
-    itemCount: items.length
-  };
+
 
   const getCartDiscounts = async () => {
     try {
       const userResponse = await authService.getUserProfile();
       const activeCoupon = (userResponse as any)?.discountCoupons.find(c => c.status === 'active' && c.couponId);
-      console.log(userResponse,"ACTIVE COUPON");
-      
-      
+      console.log(userResponse, "ACTIVE COUPON");
+
+
       if (activeCoupon?.couponId) {
         try {
           const couponResponse = await couponService.getCouponById(activeCoupon.couponId);
           if (couponResponse) {
             const coupon = couponResponse;
             let calculatedDiscount = 0;
-            
+
             if (coupon.discountType === 'percentage') {
               calculatedDiscount = (cartSummary.subtotal * coupon.discountValue) / 100;
             } else {
               calculatedDiscount = coupon.discountValue;
             }
-            
+
             setDiscountAmount(calculatedDiscount);
             setAppliedCoupon(coupon);
             setCouponSuccess(`Coupon applied! You saved $${calculatedDiscount.toFixed(2)}`);
@@ -143,48 +146,29 @@ getCartDiscounts();
 
 
   const hadleCoupenRemove = async (couponId: string) => {
-          
-    try {
-      
 
-     await couponService.removeAppliedCoupon(couponId).then((res:any)=>{
-                if(res.success){
-                  setAppliedCoupon(null);
-                  setDiscountAmount(0);
-                  setCouponInput("");
-                  setCouponSuccess("Coupon removed successfully");
-                }
-     });
-      
+    try {
+
+
+      await couponService.removeAppliedCoupon(couponId).then((res: any) => {
+        if (res.success) {
+          setAppliedCoupon(null);
+          setDiscountAmount(0);
+          setCouponInput("");
+          setCouponSuccess("Coupon removed successfully");
+        }
+      });
+
     } catch (error) {
       console.error('Error removing coupon:', error);
       setCouponError('Failed to remove coupon');
-      
+
     }
 
 
   }
 
-  // If user is not authenticated, show login prompt
-  if (!isAuthenticated) {
-    return (
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="text-center py-16">
-          <ShoppingBag className="h-16 w-16 mx-auto mb-6 text-primary" />
-          <h1 className="text-3xl font-bold mb-4">Sign in to view your cart</h1>
-          <p className="text-muted-foreground mb-8">Please log in to access your shopping cart and saved items.</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild>
-              <Link to="/login">Sign In</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link to="/register">Create Account</Link>
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+
 
   // Show loading state
   if (loading && !items.length) {
@@ -213,7 +197,7 @@ getCartDiscounts();
   const computedSubtotal = cartSummary.subtotal;
   const shipping = computedSubtotal > 50 ? 0 : 5.99;
   const total = computedSubtotal + shipping - discountAmount;
-  
+
   return (
     <div className="container mx-auto px-4 py-4 sm:py-8 max-w-7xl">
       <Tabs defaultValue="cart" className="w-full" onValueChange={setActiveTab}>
@@ -255,153 +239,153 @@ getCartDiscounts();
                     <div className="col-span-2 text-center">Quantity</div>
                     <div className="col-span-2 text-right">Total</div>
                   </div>
-                  
+
                   <ScrollArea className="h-[calc(100vh-300px)] sm:h-[calc(100vh-400px)] pr-2 sm:pr-4">
                     <div className="space-y-4 sm:space-y-6">
                       {items.filter(item => item && item._id).map((item) => (
                         <div key={item._id}>
-                            {/* Mobile Layout */}
-                            <div className="block md:hidden">
-                              <div className="flex gap-3 sm:gap-4">
-                                <Link to={`/product/${item?.inventoryId?.productId?._id}`} className="shrink-0">
-                                  <img 
-                                    src={getCartItemImageUrl(item)} 
-                                    alt={item?.inventoryId?.productId?.name || 'Product'} 
-                                    className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-md"
-                                  />
+                          {/* Mobile Layout */}
+                          <div className="block md:hidden">
+                            <div className="flex gap-3 sm:gap-4">
+                              <Link to={`/product/${item?.inventoryId?.productId?._id}`} className="shrink-0">
+                                <img
+                                  src={getCartItemImageUrl(item)}
+                                  alt={item?.inventoryId?.productId?.name || 'Product'}
+                                  className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-md"
+                                />
+                              </Link>
+                              <div className="flex-1 min-w-0">
+                                <Link to={`/product/${item?.inventoryId?.productId?._id}`} className="font-medium hover:text-primary text-sm sm:text-base line-clamp-2">
+                                  {item?.inventoryId?.productId?.name || 'Unnamed Product'}
                                 </Link>
-                                <div className="flex-1 min-w-0">
-                                  <Link to={`/product/${item?.inventoryId?.productId?._id}`} className="font-medium hover:text-primary text-sm sm:text-base line-clamp-2">
-                                    {item?.inventoryId?.productId?.name || 'Unnamed Product'}
-                                  </Link>
-                                  <p className="text-xs sm:text-sm text-muted-foreground capitalize mb-2">
-                                    {item?.inventoryId?.productId?.category?.name || 'Uncategorized'}
-                                  </p>
-                                  
-                                  {/* Variant Combinations */}
-                                  <div className="flex flex-wrap gap-1 mb-2">
-                                    {item?.inventoryId?.variantCombination?.map((combo) => (
-                                      <Badge key={combo?.variantId?._id} variant="secondary" className="text-xs">
-                                        {combo?.variantId?.name}: {combo?.value}
-                                      </Badge>
-                                    )) || null}
+                                <p className="text-xs sm:text-sm text-muted-foreground capitalize mb-2">
+                                  {item?.inventoryId?.productId?.category?.name || 'Uncategorized'}
+                                </p>
+
+                                {/* Variant Combinations */}
+                                <div className="flex flex-wrap gap-1 mb-2">
+                                  {item?.inventoryId?.variantCombination?.map((combo) => (
+                                    <Badge key={combo?.variantId?._id} variant="secondary" className="text-xs">
+                                      {combo?.variantId?.name}: {combo?.value}
+                                    </Badge>
+                                  )) || null}
+                                </div>
+
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      className="w-7 h-7 rounded-md border flex items-center justify-center hover:bg-accent disabled:opacity-50"
+                                      onClick={() => handleQuantityDecrease(item._id, item.quantity)}
+                                      disabled={loading || !item?.quantity || item.quantity <= 1}
+                                    >
+                                      <Minus className="h-3 w-3" />
+                                    </button>
+                                    <span className="w-8 text-center text-sm font-medium">{item?.quantity || 0}</span>
+                                    <button
+                                      className="w-7 h-7 rounded-md border flex items-center justify-center hover:bg-accent disabled:opacity-50"
+                                      onClick={() => handleQuantityIncrease(item._id, item.quantity, item?.inventoryId?.stock || 0)}
+                                      disabled={loading || !item?.inventoryId?.stock || item.quantity >= item.inventoryId.stock}
+                                    >
+                                      <Plus className="h-3 w-3" />
+                                    </button>
                                   </div>
-                                  
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                      <button 
-                                        className="w-7 h-7 rounded-md border flex items-center justify-center hover:bg-accent disabled:opacity-50"
-                                        onClick={() => handleQuantityDecrease(item._id, item.quantity)}
-                                        disabled={loading || !item?.quantity || item.quantity <= 1}
-                                      >
-                                        <Minus className="h-3 w-3" />
-                                      </button>
-                                      <span className="w-8 text-center text-sm font-medium">{item?.quantity || 0}</span>
-                                      <button 
-                                        className="w-7 h-7 rounded-md border flex items-center justify-center hover:bg-accent disabled:opacity-50"
-                                        onClick={() => handleQuantityIncrease(item._id, item.quantity, item?.inventoryId?.stock || 0)}
-                                        disabled={loading || !item?.inventoryId?.stock || item.quantity >= item.inventoryId.stock}
-                                      >
-                                        <Plus className="h-3 w-3" />
-                                      </button>
-                                    </div>
-                                    <div className="text-right">
-                                      <div className="text-xs text-muted-foreground">${item?.inventoryId?.price?.toFixed(2) || '0.00'} each</div>
-                                      <div className="font-semibold text-sm">${((item?.inventoryId?.price || 0) * (item?.quantity || 0)).toFixed(2)}</div>
-                                    </div>
+                                  <div className="text-right">
+                                    <div className="text-xs text-muted-foreground">${item?.inventoryId?.price?.toFixed(2) || '0.00'} each</div>
+                                    <div className="font-semibold text-sm">${((item?.inventoryId?.price || 0) * (item?.quantity || 0)).toFixed(2)}</div>
                                   </div>
-                                  
-                                  <button 
-                                    className="text-xs text-destructive flex items-center mt-2 hover:text-destructive/80 disabled:opacity-50"
-                                    onClick={() => removeItem(item._id)}
-                                    disabled={loading}
-                                  >
-                                    <Trash2 className="h-3 w-3 mr-1" />
-                                    Remove
-                                  </button>
+                                </div>
+
+                                <button
+                                  className="text-xs text-destructive flex items-center mt-2 hover:text-destructive/80 disabled:opacity-50"
+                                  onClick={() => removeItem(item._id)}
+                                  disabled={loading}
+                                >
+                                  <Trash2 className="h-3 w-3 mr-1" />
+                                  Remove
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Desktop Layout */}
+                          <div className="hidden md:grid md:grid-cols-12 gap-4 items-center">
+                            <div className="col-span-6 flex items-center space-x-4">
+                              <Link to={`/product/${item?.inventoryId?.productId?._id}`} className="shrink-0">
+                                <img
+                                  src={getCartItemImageUrl(item)}
+                                  alt={item?.inventoryId?.productId?.name || 'Product'}
+                                  className="w-20 h-20 object-cover rounded-md"
+                                />
+                              </Link>
+                              <div>
+                                <Link to={`/product/${item?.inventoryId?.productId?._id}`} className="font-medium hover:text-primary">
+                                  {item?.inventoryId?.productId?.name || 'Unnamed Product'}
+                                </Link>
+                                <p className="text-sm text-muted-foreground capitalize">
+                                  {item?.inventoryId?.productId?.category?.name || 'Uncategorized'}
+                                </p>
+
+                                {/* Variant Combinations */}
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {item?.inventoryId?.variantCombination?.map((combo) => (
+                                    <Badge key={combo?.variantId?._id} variant="secondary" className="text-xs">
+                                      {combo?.variantId?.name}: {combo?.value}
+                                    </Badge>
+                                  )) || null}
                                 </div>
                               </div>
                             </div>
 
-                            {/* Desktop Layout */}
-                            <div className="hidden md:grid md:grid-cols-12 gap-4 items-center">
-                              <div className="col-span-6 flex items-center space-x-4">
-                                <Link to={`/product/${item?.inventoryId?.productId?._id}`} className="shrink-0">
-                                  <img 
-                                    src={getCartItemImageUrl(item)} 
-                                    alt={item?.inventoryId?.productId?.name || 'Product'} 
-                                    className="w-20 h-20 object-cover rounded-md"
-                                  />
-                                </Link>
-                                <div>
-                                  <Link to={`/product/${item?.inventoryId?.productId?._id}`} className="font-medium hover:text-primary">
-                                    {item?.inventoryId?.productId?.name || 'Unnamed Product'}
-                                  </Link>
-                                  <p className="text-sm text-muted-foreground capitalize">
-                                    {item?.inventoryId?.productId?.category?.name || 'Uncategorized'}
-                                  </p>
-                                  
-                                  {/* Variant Combinations */}
-                                  <div className="flex flex-wrap gap-1 mt-1">
-                                    {item?.inventoryId?.variantCombination?.map((combo) => (
-                                      <Badge key={combo?.variantId?._id} variant="secondary" className="text-xs">
-                                        {combo?.variantId?.name}: {combo?.value}
-                                      </Badge>
-                                    )) || null}
-                                  </div>
-                                </div>
-                              </div>
-                              
-                              <div className="col-span-2 text-center">
-                                <div>${item?.inventoryId?.price?.toFixed(2) || '0.00'}</div>
-                              </div>
-                              
-                              <div className="col-span-2 text-center">
-                                <div className="flex items-center justify-center max-w-[120px] mx-auto">
-                                  <button 
-                                    className="w-8 h-8 rounded-l-md border flex items-center justify-center hover:bg-accent disabled:opacity-50"
-                                    onClick={() => handleQuantityDecrease(item._id, item.quantity)}
-                                    disabled={loading || !item?.quantity || item.quantity <= 1}
-                                  >
-                                    <Minus className="h-3 w-3" />
-                                  </button>
-                                  <div className="w-10 h-8 border-t border-b flex items-center justify-center">
-                                    {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : item?.quantity || 0}
-                                  </div>
-                                  <button 
-                                    className="w-8 h-8 rounded-r-md border flex items-center justify-center hover:bg-accent disabled:opacity-50"
-                                    onClick={() => handleQuantityIncrease(item._id, item.quantity, item?.inventoryId?.stock || 0)}
-                                    disabled={loading || !item?.inventoryId?.stock || item.quantity >= item.inventoryId.stock}
-                                  >
-                                    <Plus className="h-3 w-3" />
-                                  </button>
-                                </div>
-                                {item?.inventoryId?.stock < 5 && (
-                                  <p className="text-xs text-warning mt-1">Only {item.inventoryId.stock} left!</p>
-                                )}
-                              </div>
-                              
-                              <div className="col-span-2 flex justify-end items-center gap-4">
-                                <div className="font-medium">${((item?.inventoryId?.price || 0) * (item?.quantity || 0)).toFixed(2)}</div>
-                                <button 
-                                  className="text-muted-foreground hover:text-destructive disabled:opacity-50"
-                                  onClick={() => removeItem(item._id)}
-                                  disabled={loading}
+                            <div className="col-span-2 text-center">
+                              <div>${item?.inventoryId?.price?.toFixed(2) || '0.00'}</div>
+                            </div>
+
+                            <div className="col-span-2 text-center">
+                              <div className="flex items-center justify-center max-w-[120px] mx-auto">
+                                <button
+                                  className="w-8 h-8 rounded-l-md border flex items-center justify-center hover:bg-accent disabled:opacity-50"
+                                  onClick={() => handleQuantityDecrease(item._id, item.quantity)}
+                                  disabled={loading || !item?.quantity || item.quantity <= 1}
                                 >
-                                  <Trash2 className="h-5 w-5" />
+                                  <Minus className="h-3 w-3" />
+                                </button>
+                                <div className="w-10 h-8 border-t border-b flex items-center justify-center">
+                                  {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : item?.quantity || 0}
+                                </div>
+                                <button
+                                  className="w-8 h-8 rounded-r-md border flex items-center justify-center hover:bg-accent disabled:opacity-50"
+                                  onClick={() => handleQuantityIncrease(item._id, item.quantity, item?.inventoryId?.stock || 0)}
+                                  disabled={loading || !item?.inventoryId?.stock || item.quantity >= item.inventoryId.stock}
+                                >
+                                  <Plus className="h-3 w-3" />
                                 </button>
                               </div>
+                              {item?.inventoryId?.stock < 5 && (
+                                <p className="text-xs text-warning mt-1">Only {item.inventoryId.stock} left!</p>
+                              )}
                             </div>
-                            
-                            <Separator className="mt-4 sm:mt-6" />
+
+                            <div className="col-span-2 flex justify-end items-center gap-4">
+                              <div className="font-medium">${((item?.inventoryId?.price || 0) * (item?.quantity || 0)).toFixed(2)}</div>
+                              <button
+                                className="text-muted-foreground hover:text-destructive disabled:opacity-50"
+                                onClick={() => removeItem(item._id)}
+                                disabled={loading}
+                              >
+                                <Trash2 className="h-5 w-5" />
+                              </button>
+                            </div>
                           </div>
-                        ))}
+
+                          <Separator className="mt-4 sm:mt-6" />
+                        </div>
+                      ))}
                     </div>
                   </ScrollArea>
-                  
+
                   <div className="flex flex-col sm:flex-row gap-3 sm:justify-between mt-4 sm:mt-6">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="w-full sm:w-auto"
                       asChild
                     >
@@ -410,9 +394,9 @@ getCartDiscounts();
                         Continue Shopping
                       </Link>
                     </Button>
-                    
-                    <Button 
-                      variant="ghost" 
+
+                    <Button
+                      variant="ghost"
                       className="w-full sm:w-auto text-destructive hover:text-destructive hover:bg-destructive/10 disabled:opacity-50"
                       onClick={clearCart}
                       disabled={loading}
@@ -423,7 +407,7 @@ getCartDiscounts();
                   </div>
                 </Card>
               </div>
-              
+
               <div className="lg:col-span-4">
                 <Card className="lg:sticky lg:top-24">
                   <CardHeader className="pb-4">
@@ -439,14 +423,14 @@ getCartDiscounts();
                       <span className="text-muted-foreground">Shipping</span>
                       <span className="font-medium">{shipping === 0 ? 'Free' : `$${shipping.toFixed(2)}`}</span>
                     </div>
-                    
+
                     <Separator />
-                    
+
                     <div className="flex justify-between font-semibold text-base sm:text-lg">
                       <span>Total</span>
                       <span>${total.toFixed(2)}</span>
                     </div>
-                    
+
                     <div className="pt-3 sm:pt-4 space-y-3 sm:space-y-4">
                       <div className="flex flex-col gap-2">
                         {appliedCoupon ? (
@@ -459,8 +443,8 @@ getCartDiscounts();
                                 </div>
                               </div>
                               <AlertDialog open={removeCouponId === appliedCoupon._id}>
-                                <Button 
-                                  variant="ghost" 
+                                <Button
+                                  variant="ghost"
                                   size="sm"
                                   className="text-destructive hover:text-destructive"
                                   onClick={(e) => {
@@ -480,7 +464,7 @@ getCartDiscounts();
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
                                     <AlertDialogCancel onClick={() => setRemoveCouponId(null)}>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction 
+                                    <AlertDialogAction
                                       onClick={() => {
                                         if (removeCouponId) {
                                           hadleCoupenRemove(removeCouponId);
@@ -498,16 +482,16 @@ getCartDiscounts();
                           </div>
                         ) : (
                           <div className="flex flex-col sm:flex-row gap-2">
-                            <Input 
-                              placeholder="Enter coupon code" 
+                            <Input
+                              placeholder="Enter coupon code"
                               className="flex-1 text-sm"
                               value={couponInput}
                               onChange={e => setCouponInput(e.target.value)}
                               disabled={couponLoading}
                             />
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
+                            <Button
+                              variant="outline"
+                              size="sm"
                               className="sm:px-4"
                               onClick={handleApplyCoupon}
                               disabled={couponLoading || !couponInput.trim()}
@@ -516,7 +500,7 @@ getCartDiscounts();
                             </Button>
                           </div>
                         )}
-                        
+
                         {couponSuccess && !appliedCoupon && (
                           <div className="text-green-600 text-xs font-semibold bg-green-50 p-2 rounded-md">{couponSuccess}</div>
                         )}
@@ -524,8 +508,8 @@ getCartDiscounts();
                           <div className="text-red-600 text-xs font-medium">{couponError}</div>
                         )}
                       </div>
-                      
-                      <Button 
+
+                      <Button
                         className="w-full"
                         onClick={handleCheckout}
                         size="lg"

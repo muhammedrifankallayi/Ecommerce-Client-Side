@@ -12,12 +12,12 @@ interface ProductGridProps {
 const ProductGrid = ({ products, filter, sort, lastProductRef }: ProductGridProps) => {
   const filteredAndSortedProducts = useMemo(() => {
     let result = [...products];
-    
+
     // Apply filtering (kept for backward compatibility)
     if (filter && filter !== 'all') {
       result = result.filter(product => product.category?.name === filter);
     }
-    
+
     // Apply sorting
     if (sort) {
       switch (sort) {
@@ -44,26 +44,22 @@ const ProductGrid = ({ products, filter, sort, lastProductRef }: ProductGridProp
           break;
       }
     }
-    
+
     return result;
   }, [products, filter, sort]);
-  
+
   if (filteredAndSortedProducts.length === 0) {
-    return (
-      <div className="text-center py-8 px-4">
-        <p className="text-muted-foreground">No products found.</p>
-      </div>
-    );
+    return null;
   }
-  
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6 px-4 sm:px-0">
       {filteredAndSortedProducts.map((product, index) => {
         // Attach ref to the last product for infinite loading
         const isLastProduct = filteredAndSortedProducts.length === index + 1;
-        
+
         return (
-          <div 
+          <div
             key={product._id}
             ref={isLastProduct && lastProductRef ? lastProductRef : null}
           >

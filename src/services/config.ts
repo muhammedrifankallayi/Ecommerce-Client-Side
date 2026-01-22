@@ -1,7 +1,7 @@
 export const BASE_URL = "http://localhost:5000";
 
 // Company ID configuration - can be overridden by environment variable
-export const COMPANY_ID = import.meta.env.VITE_COMPANY_ID || "686e3977d861a6eff15cec67";
+export const COMPANY_ID = import.meta.env.VITE_COMPANY_ID || "691d3c23eb1f60306db7dd55";
 
 export const ENDPOINTS = {
   products: "/api/products",

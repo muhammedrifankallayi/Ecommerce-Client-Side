@@ -14,10 +14,18 @@ export interface ProductWithInventory extends Product {
 }
 
 export interface ProductsResponse {
-  products: Product[];
-  page: number;
-  pages: number;
-  total: number;
+  success: boolean;
+  message?: string;
+  products?: Product[];
+  page?: number;
+  pages?: number;
+  total?: number;
+  data?: {
+    products: Product[];
+    page: number;
+    pages: number;
+    total: number;
+  };
 }
 
 export class ProductService {

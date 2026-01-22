@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { cartService } from '@/services/cartService';
+import { productService } from '@/services/productService';
 import { CartItem } from '@/types/api';
 import { useAuth } from './AuthContext';
 import { toast } from "@/components/ui/use-toast";
@@ -43,16 +44,55 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     totalAmount: items.reduce((total, item) => total + ((item.quantity || 0) * (item.inventoryId?.price || 0)), 0)
   };
 
-  // Fetch cart items on mount and when auth state changes
+  // Helper for Guest Cart
+  const getGuestItems = (): CartItem[] => {
+    if (typeof window === 'undefined') return [];
+    const saved = localStorage.getItem('guest_cart');
+    return saved ? JSON.parse(saved) : [];
+  };
+
+  const setGuestItems = (newItems: CartItem[]) => {
+    localStorage.setItem('guest_cart', JSON.stringify(newItems));
+    setItems(newItems);
+  };
+
+  // Fetch cart items or load from guest cart
   useEffect(() => {
     if (isAuthenticated) {
-      fetchCart();
+      syncAndFetchCart();
     } else {
-      setItems([]);
+      setItems(getGuestItems());
     }
   }, [isAuthenticated]);
 
+  const syncAndFetchCart = async () => {
+    const guestItems = getGuestItems();
+    if (guestItems.length > 0) {
+      setLoading(true);
+      try {
+        // Sync each item to backend
+        for (const item of guestItems) {
+          try {
+            await cartService.addToCart(
+              item.inventoryId.productId._id,
+              item.quantity,
+              item.inventoryId._id
+            );
+          } catch (syncErr) {
+            console.error('Failed to sync item:', item, syncErr);
+          }
+        }
+        // Clear guest cart after successful sync attempt
+        localStorage.removeItem('guest_cart');
+      } catch (err) {
+        console.error('Error syncing guest cart:', err);
+      }
+    }
+    await fetchCart();
+  };
+
   const fetchCart = async () => {
+    if (!isAuthenticated) return;
     try {
       setLoading(true);
       setError(null);
@@ -69,11 +109,59 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addToCart = async (productId: string, quantity: number, inventoryId: string) => {
     if (!isAuthenticated) {
-      toast({
-        title: "Authentication required",
-        description: "Please log in to add items to your cart.",
-        variant: "destructive",
-      });
+      // Guest mode
+      setLoading(true);
+      try {
+        const guestItems = getGuestItems();
+        const existingItem = guestItems.find(item => item.inventoryId._id === inventoryId);
+
+        if (existingItem) {
+          existingItem.quantity += quantity;
+          setGuestItems([...guestItems]);
+        } else {
+          // Fetch product & inventory details for guest display
+          const productResponse = await productService.getProductById(productId);
+          if (productResponse.success) {
+            const product = productResponse.data;
+            const inventory = product.inventories?.find(inv => inv._id === inventoryId);
+
+            if (!inventory) throw new Error('Inventory not found');
+
+            const newItem: CartItem = {
+              _id: `guest_${Date.now()}_${Math.random()}`,
+              userId: 'guest',
+              companyId: product.companyId,
+              inventoryId: {
+                ...inventory,
+                productId: {
+                  _id: product._id,
+                  name: product.name,
+                  images: product.images,
+                  category: product.category,
+                  brand: product.brand
+                }
+              } as any,
+              quantity,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            };
+            setGuestItems([...guestItems, newItem]);
+          }
+        }
+        toast({
+          title: "Added to cart",
+          description: "Item added to your temporary cart.",
+        });
+      } catch (err) {
+        console.error('Error adding to guest cart:', err);
+        toast({
+          title: "Error",
+          description: "Could not add item to cart.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
@@ -102,7 +190,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const removeItem = async (itemId: string) => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      const guestItems = getGuestItems().filter(item => item._id !== itemId);
+      setGuestItems(guestItems);
+      toast({
+        title: "Item removed",
+        description: "Item removed from your temporary cart.",
+      });
+      return;
+    }
 
     try {
       setLoading(true);
@@ -127,7 +223,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateQuantity = async (itemId: string, quantity: number) => {
-    if (!isAuthenticated || quantity < 1) return;
+    if (quantity < 1) return;
+
+    if (!isAuthenticated) {
+      const guestItems = getGuestItems();
+      const item = guestItems.find(i => i._id === itemId);
+      if (item) {
+        item.quantity = quantity;
+        setGuestItems([...guestItems]);
+      }
+      return;
+    }
 
     try {
       setLoading(true);
@@ -148,7 +254,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const clearCart = async () => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      localStorage.removeItem('guest_cart');
+      setItems([]);
+      toast({
+        title: "Cart cleared",
+        description: "Temporary cart cleared.",
+      });
+      return;
+    }
 
     try {
       setLoading(true);

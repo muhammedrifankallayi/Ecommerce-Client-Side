@@ -18,8 +18,8 @@ const Navbar = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
-  
-  const { cart, cartSummary } = useCart();
+
+  const { cartSummary } = useCart();
   const { isAuthenticated, user, logout, isLoading } = useAuth();
 
   // Fetch categories from API
@@ -28,7 +28,7 @@ const Navbar = () => {
       try {
         setCategoriesLoading(true);
         setCategoriesError(null);
-        
+
         const categoriesData = await categoryService.getCategories();
         setCategories(categoriesData);
       } catch (err) {
@@ -47,16 +47,19 @@ const Navbar = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="font-bold text-2xl gradient-text">EcoShop</Link>
-          
+          <Link to="/" className="flex items-center gap-2 group">
+            <img src="/logo.png" alt="DCS Logo" className="h-10 w-10 object-contain group-hover:scale-110 transition-transform duration-300" />
+            <span className="font-bold text-2xl gradient-text">E-Devarcus</span>
+          </Link>
+
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <Link to="/" className="font-medium hover:text-primary transition-all duration-300 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-primary after:left-0 after:-bottom-1 after:transition-all after:duration-300 hover:after:w-full">Home</Link>
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   className="font-medium hover:bg-primary/10 rounded-full"
                   disabled={categoriesLoading}
                 >
@@ -94,11 +97,11 @@ const Navbar = () => {
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
-            
+
             <Link to="/products" className="font-medium hover:text-primary transition-all duration-300 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-primary after:left-0 after:-bottom-1 after:transition-all after:duration-300 hover:after:w-full">All Products</Link>
             <Link to="/help" className="font-medium hover:text-primary transition-all duration-300 relative after:content-[''] after:absolute after:w-0 after:h-0.5 after:bg-primary after:left-0 after:-bottom-1 after:transition-all after:duration-300 hover:after:w-full">Help</Link>
           </nav>
-          
+
           {/* Actions */}
           <div className="flex items-center space-x-4">
             <Link to="/cart" className="relative p-2 rounded-full hover:bg-primary/10 transition-all duration-300">
@@ -109,7 +112,7 @@ const Navbar = () => {
                 </span>
               )}
             </Link>
-            
+
             {isLoading ? (
               // Show loader while checking authentication
               <div className="hidden md:flex items-center gap-2 p-2 rounded-full">
@@ -118,7 +121,7 @@ const Navbar = () => {
               </div>
             ) : !isAuthenticated ? (
               // Show login button if not authenticated
-              <Button 
+              <Button
                 className="hidden md:flex items-center gap-2 bg-primary hover:bg-primary-light text-white px-4 py-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
                 asChild
               >
@@ -133,7 +136,7 @@ const Navbar = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="hidden md:flex items-center gap-2 p-2 rounded-full hover:bg-primary/10 transition-all duration-300">
                     <UserRound className="h-5 w-5 text-foreground hover:text-primary transition-colors" />
-                    <span className="text-sm font-medium">{user?.name?.split(' ')[0] || 'User'}</span>
+                    <span className="text-sm font-medium">{user?.firstName || 'User'}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48 glass-card backdrop-blur-md border-white/20">
@@ -143,7 +146,7 @@ const Navbar = () => {
                   <DropdownMenuItem asChild className="hover:bg-primary/10 rounded-lg">
                     <Link to="/orders">Orders</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={logout}
                     className="hover:bg-red-100 text-red-600 rounded-lg cursor-pointer"
                   >
@@ -153,9 +156,9 @@ const Navbar = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-            
+
             {/* Mobile Menu Button */}
-            <button 
+            <button
               className="md:hidden text-foreground p-2 rounded-full hover:bg-primary/10 transition-all duration-300"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
@@ -163,20 +166,20 @@ const Navbar = () => {
             </button>
           </div>
         </div>
-        
+
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden mt-6 glass-card rounded-2xl p-6 backdrop-blur-md bg-white/50 border border-white/20 animate-fade-in">
             <nav className="flex flex-col space-y-4">
-              <Link 
-                to="/" 
+              <Link
+                to="/"
                 className="font-medium py-3 px-4 rounded-xl hover:bg-primary/10 hover:text-primary transition-all duration-300"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Home
               </Link>
-              <Link 
-                to="/products" 
+              <Link
+                to="/products"
                 className="font-medium py-3 px-4 rounded-xl hover:bg-primary/10 hover:text-primary transition-all duration-300"
                 onClick={() => setIsMenuOpen(false)}
               >
@@ -197,9 +200,9 @@ const Navbar = () => {
                 </div>
               ) : (
                 categories.map((category) => (
-                  <Link 
+                  <Link
                     key={category._id}
-                    to={`/products?category=${category._id}`} 
+                    to={`/products?category=${category._id}`}
                     className="font-medium py-3 px-4 rounded-xl hover:bg-primary/10 hover:text-primary transition-all duration-300"
                     onClick={() => setIsMenuOpen(false)}
                   >
@@ -215,8 +218,8 @@ const Navbar = () => {
                 </div>
               ) : !isAuthenticated ? (
                 // Show login button if not authenticated
-                <Link 
-                  to="/login" 
+                <Link
+                  to="/login"
                   className="font-medium py-3 px-4 rounded-xl hover:bg-primary/10 hover:text-primary transition-all duration-300 flex items-center gap-2"
                   onClick={() => setIsMenuOpen(false)}
                 >
@@ -228,23 +231,23 @@ const Navbar = () => {
                 <>
                   <div className="py-3 px-4 border-b border-gray-200">
                     <p className="text-sm text-muted-foreground">Welcome back,</p>
-                    <p className="font-medium">{user?.name || 'User'}</p>
+                    <p className="font-medium">{user?.firstName} {user?.lastName}</p>
                   </div>
-                  <Link 
-                    to="/profile" 
+                  <Link
+                    to="/profile"
                     className="font-medium py-3 px-4 rounded-xl hover:bg-primary/10 hover:text-primary transition-all duration-300"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Profile
                   </Link>
-                  <Link 
-                    to="/orders" 
+                  <Link
+                    to="/orders"
                     className="font-medium py-3 px-4 rounded-xl hover:bg-primary/10 hover:text-primary transition-all duration-300"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Orders
                   </Link>
-                  <button 
+                  <button
                     onClick={() => {
                       logout();
                       setIsMenuOpen(false);
@@ -256,8 +259,8 @@ const Navbar = () => {
                   </button>
                 </>
               )}
-              <Link 
-                to="/help" 
+              <Link
+                to="/help"
                 className="font-medium py-3 px-4 rounded-xl hover:bg-primary/10 hover:text-primary transition-all duration-300"
                 onClick={() => setIsMenuOpen(false)}
               >

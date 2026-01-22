@@ -5,12 +5,11 @@ import ProductCard from './ProductCard';
 import { Product, Category } from '@/types';
 import { ArrowRight, Filter, Loader2 } from 'lucide-react';
 import { landingUiService } from '@/services/landingUiService';
-import { CategoryService } from '@/services/categoryService';
+import { categoryService } from '@/services/categoryService';
 
-const FeaturedProducts = ({featuredProducts}) => {
+const FeaturedProducts = ({ featuredProducts: initialProducts }: { featuredProducts: Product[] }) => {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('all');
-  const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,29 +20,24 @@ const FeaturedProducts = ({featuredProducts}) => {
     ...categories
   ];
 
-  // Fetch featured products and categories
+  // Fetch categories only (for the tabs)
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchCategories = async () => {
       try {
-        const [uiResponse, categoriesResponse] = await Promise.all([
-          landingUiService.getLandingUi(),
-          new CategoryService().getCategories()
-        ]);
-        
-        setProducts(uiResponse.data.featuredProducts);
+        const categoriesResponse = await categoryService.getCategories();
         setCategories(categoriesResponse);
         setLoading(false);
       } catch (error) {
-        console.error("Error fetching data:", error);
-        setError("Failed to load data. Please try again.");
+        console.error("Error fetching categories:", error);
         setLoading(false);
       }
     };
 
-    fetchData();
+    fetchCategories();
   }, []);
 
-  const filteredProducts = products.slice(0, 8)
+  if (!initialProducts || initialProducts.length === 0) return null;
+  const filteredProducts = initialProducts.slice(0, 8);
 
   return (
     <section className="py-20 lg:py-32 bg-gradient-to-br from-background to-secondary/50">
@@ -68,11 +62,10 @@ const FeaturedProducts = ({featuredProducts}) => {
             <Button
               key={category._id}
               variant={activeCategory === category._id ? 'default' : 'outline'}
-              className={`px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm rounded-full transition-all duration-300 ${
-                activeCategory === category._id
-                  ? 'bg-primary text-white shadow-lg scale-105'
-                  : 'hover:scale-105 glass-card'
-              }`}
+              className={`px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm rounded-full transition-all duration-300 ${activeCategory === category._id
+                ? 'bg-primary text-white shadow-lg scale-105'
+                : 'hover:scale-105 glass-card'
+                }`}
               onClick={() => {
                 setActiveCategory(category._id);
                 if (category._id !== 'all') {
@@ -101,10 +94,10 @@ const FeaturedProducts = ({featuredProducts}) => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-8 mb-8 sm:mb-12 px-4 sm:px-0">
             {filteredProducts.map((product, index) => (
-              <div 
-                key={product._id} 
+              <div
+                key={product._id}
                 className="scale-hover"
-                style={{ 
+                style={{
                   animationDelay: `${index * 100}ms`,
                   animation: 'fade-in 0.6s ease-out forwards'
                 }}
@@ -117,7 +110,7 @@ const FeaturedProducts = ({featuredProducts}) => {
 
         {/* View All Button */}
         <div className="text-center px-4 sm:px-0">
-          <Button 
+          <Button
             className="w-full sm:w-auto bg-primary hover:bg-primary-light text-white px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group"
             asChild
           >

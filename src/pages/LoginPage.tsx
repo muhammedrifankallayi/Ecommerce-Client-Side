@@ -58,8 +58,8 @@ const LoginPage = () => {
             description: (
               <div className="flex flex-col space-y-2">
                 <span>Didn't receive the email?</span>
-                <Link 
-                  to="/resend-verification" 
+                <Link
+                  to="/resend-verification"
                   className="text-blue-600 hover:underline font-medium"
                 >
                   Click here to resend verification email
@@ -171,11 +171,11 @@ const LoginPage = () => {
                   <span className="w-full border-t border-border" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">New to EcoShop?</span>
+                  <span className="bg-background px-2 text-muted-foreground">New to E-Devarcus?</span>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground">
-                Join thousands of customers who trust us for sustainable shopping.{" "}
+                Join thousands of customers who trust us for their shopping.{" "}
                 <Link
                   to="/register"
                   className="text-primary hover:underline font-medium inline-flex items-center gap-1"

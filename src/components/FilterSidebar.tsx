@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { X, Filter, DollarSign, Loader2 } from 'lucide-react';
+import { X, ListFilter, DollarSign, Loader2, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
@@ -29,33 +29,50 @@ export interface FilterState {
   inStock: boolean;
 }
 
+import { variantService } from '@/services/variantService';
+
 const FilterSidebar = ({ isOpen, onClose, onFiltersChange, currentFilters }: FilterSidebarProps) => {
   const [localFilters, setLocalFilters] = useState<FilterState>(currentFilters);
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
+  const [colors, setColors] = useState<string[]>([]);
+  const [sizes, setSizes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Mock data for colors and sizes (these would come from API in a real implementation)
-  const colors = ['Red', 'Blue', 'Green', 'Black', 'White', 'Gray'];
-  const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
-  const maxPrice = 1000; // Default max price
+  const maxPrice = 10000; // Updated max price limit
 
-  // Fetch categories and brands from API
+  // Fetch categories, brands and variants from API
   useEffect(() => {
     const fetchFilterData = async () => {
       try {
         setLoading(true);
         setError(null);
-        
-        // Fetch categories and brands in parallel
-        const [categoriesData, brandsData] = await Promise.all([
+
+        // Fetch categories, brands and variants in parallel
+        const [categoriesData, brandsData, variantsData] = await Promise.all([
           categoryService.getCategories(),
-          brandService.getBrands()
+          brandService.getBrands(),
+          variantService.getVariants({ limit: 100 })
         ]);
-        
+
         setCategories(categoriesData);
         setBrands(brandsData);
+
+        // Extract colors and sizes from variants
+        if (variantsData.success && variantsData.data?.data) {
+          const allVariants = variantsData.data.data;
+
+          const colorVariant = allVariants.find(v => v.type.toLowerCase() === 'color' || v.name.toLowerCase() === 'color');
+          if (colorVariant && (colorVariant as any).values) {
+            setColors((colorVariant as any).values);
+          }
+
+          const sizeVariant = allVariants.find(v => v.type.toLowerCase() === 'size' || v.name.toLowerCase() === 'size');
+          if (sizeVariant && (sizeVariant as any).values) {
+            setSizes((sizeVariant as any).values);
+          }
+        }
       } catch (err) {
         console.error('Error fetching filter data:', err);
         setError('Failed to load filter options');
@@ -75,7 +92,7 @@ const FilterSidebar = ({ isOpen, onClose, onFiltersChange, currentFilters }: Fil
     const updatedCategories = checked
       ? [...localFilters.categories, category]
       : localFilters.categories.filter(c => c !== category);
-    
+
     const newFilters = { ...localFilters, categories: updatedCategories };
     setLocalFilters(newFilters);
     onFiltersChange(newFilters);
@@ -85,7 +102,7 @@ const FilterSidebar = ({ isOpen, onClose, onFiltersChange, currentFilters }: Fil
     const updatedBrands = checked
       ? [...localFilters.brands, brand]
       : localFilters.brands.filter(b => b !== brand);
-    
+
     const newFilters = { ...localFilters, brands: updatedBrands };
     setLocalFilters(newFilters);
     onFiltersChange(newFilters);
@@ -95,7 +112,7 @@ const FilterSidebar = ({ isOpen, onClose, onFiltersChange, currentFilters }: Fil
     const updatedColors = checked
       ? [...localFilters.colors, color]
       : localFilters.colors.filter(c => c !== color);
-    
+
     const newFilters = { ...localFilters, colors: updatedColors };
     setLocalFilters(newFilters);
     onFiltersChange(newFilters);
@@ -105,7 +122,7 @@ const FilterSidebar = ({ isOpen, onClose, onFiltersChange, currentFilters }: Fil
     const updatedSizes = checked
       ? [...localFilters.sizes, size]
       : localFilters.sizes.filter(s => s !== size);
-    
+
     const newFilters = { ...localFilters, sizes: updatedSizes };
     setLocalFilters(newFilters);
     onFiltersChange(newFilters);
@@ -136,29 +153,31 @@ const FilterSidebar = ({ isOpen, onClose, onFiltersChange, currentFilters }: Fil
   return (
     <>
       {/* Overlay */}
-      <div 
-        className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+      <div
+        className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-500"
         onClick={onClose}
       />
-      
-      {/* Sidebar */}
-      <div className={`fixed top-0 left-0 h-full w-80 bg-white shadow-lg z-50 transform transition-transform duration-300 overflow-y-auto ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-4">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              <h2 className="text-lg font-semibold">Filters</h2>
+
+      {/* Sidebar - Enhanced minimalist glass design */}
+      <div className={`fixed top-0 right-0 h-full w-[380px] bg-white/80 backdrop-blur-2xl shadow-[0_0_50px_rgba(0,0,0,0.1)] z-50 transform transition-transform duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] overflow-y-auto border-l border-black/[0.03] ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <div className="p-10">
+          {/* Header - Minimalist */}
+          <div className="flex items-center justify-between mb-12">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-black text-white rounded-xl shadow-lg -rotate-12 group-hover:rotate-0 transition-transform duration-500">
+                <ListFilter className="h-5 w-5" />
+              </div>
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900">Filters</h2>
             </div>
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-5 w-5" />
+            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full hover:bg-black/5">
+              <X className="h-6 w-6 text-gray-400" />
             </Button>
           </div>
 
           {/* Clear All Filters */}
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={resetFilters}
             className="w-full mb-4"
           >
@@ -166,29 +185,31 @@ const FilterSidebar = ({ isOpen, onClose, onFiltersChange, currentFilters }: Fil
           </Button>
 
           {/* Categories */}
-          <div className="mb-6">
-            <h3 className="font-medium mb-3">Categories</h3>
+          <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-black/30 mb-6">Categories</h3>
             {loading ? (
-              <div className="flex items-center justify-center py-4">
+              <div className="flex items-center gap-3 py-4 text-gray-400">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="ml-2 text-sm text-gray-500">Loading categories...</span>
+                <span className="text-sm font-medium">Assembling...</span>
               </div>
             ) : error ? (
-              <div className="text-sm text-red-500 py-2">{error}</div>
-            ) : categories.length === 0 ? (
-              <div className="text-sm text-gray-500 py-2">No categories available</div>
+              <div className="text-sm text-red-400 py-2">{error}</div>
             ) : (
-              <div className="space-y-2 max-h-40 overflow-y-auto">
+              <div className="grid grid-cols-1 gap-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                 {categories.map(category => (
-                  <div key={category._id} className="flex items-center space-x-2">
+                  <div key={category._id} className="group flex items-center justify-between">
+                    <Label
+                      htmlFor={`category-${category._id}`}
+                      className="text-base font-medium text-gray-700 cursor-pointer group-hover:text-black transition-colors"
+                    >
+                      {category.name}
+                    </Label>
                     <Checkbox
                       id={`category-${category._id}`}
                       checked={localFilters.categories.includes(category._id)}
                       onCheckedChange={(checked) => handleCategoryChange(category._id, checked as boolean)}
+                      className="h-5 w-5 rounded-md border-black/10 data-[state=checked]:bg-black data-[state=checked]:border-black transition-all"
                     />
-                    <Label htmlFor={`category-${category._id}`} className="text-sm capitalize">
-                      {category.name}
-                    </Label>
                   </div>
                 ))}
               </div>
@@ -198,111 +219,113 @@ const FilterSidebar = ({ isOpen, onClose, onFiltersChange, currentFilters }: Fil
           <Separator className="my-4" />
 
           {/* Brands */}
-          <div className="mb-6">
-            <h3 className="font-medium mb-3">Brands</h3>
+          <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-black/30 mb-6">Brands</h3>
             {loading ? (
-              <div className="flex items-center justify-center py-4">
+              <div className="flex items-center gap-3 py-4 text-gray-400">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="ml-2 text-sm text-gray-500">Loading brands...</span>
+                <span className="text-sm font-medium">Loading brands...</span>
               </div>
             ) : error ? (
-              <div className="text-sm text-red-500 py-2">{error}</div>
-            ) : brands.length === 0 ? (
-              <div className="text-sm text-gray-500 py-2">No brands available</div>
+              <div className="text-sm text-red-400 py-2">{error}</div>
             ) : (
-              <div className="space-y-2 max-h-40 overflow-y-auto">
+              <div className="grid grid-cols-1 gap-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                 {brands.map(brand => (
-                  <div key={brand._id} className="flex items-center space-x-2">
+                  <div key={brand._id} className="group flex items-center justify-between">
+                    <Label
+                      htmlFor={`brand-${brand._id}`}
+                      className="text-base font-medium text-gray-700 cursor-pointer group-hover:text-black transition-colors"
+                    >
+                      {brand.name}
+                    </Label>
                     <Checkbox
                       id={`brand-${brand._id}`}
                       checked={localFilters.brands.includes(brand._id)}
                       onCheckedChange={(checked) => handleBrandChange(brand._id, checked as boolean)}
-                      />
-                    <Label htmlFor={`brand-${brand._id}`} className="text-sm">
-                      {brand.name}
-                    </Label>
+                      className="h-5 w-5 rounded-md border-black/10 data-[state=checked]:bg-black data-[state=checked]:border-black transition-all"
+                    />
                   </div>
                 ))}
               </div>
             )}
           </div>
-          <Separator className="my-4" />
 
           {/* Price Range */}
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <DollarSign className="h-4 w-4" />
-              <h3 className="font-medium">Price Range</h3>
-            </div>
-            <div className="space-y-4">
+          <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-black/30 mb-6">Price Range</h3>
+            <div className="space-y-6 px-1">
               <Slider
                 value={localFilters.priceRange}
                 min={0}
                 max={Math.ceil(maxPrice)}
                 step={1}
                 onValueChange={handlePriceRangeChange}
-                className="w-full"
+                className="w-full h-1"
               />
-              <div className="flex items-center justify-between text-sm text-gray-600">
-                <span>${localFilters.priceRange[0]}</span>
-                <span>${localFilters.priceRange[1]}</span>
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase font-bold text-gray-300">Minimum</span>
+                  <span className="text-xl font-bold tracking-tight text-gray-900">${localFilters.priceRange[0]}</span>
+                </div>
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] uppercase font-bold text-gray-300">Maximum</span>
+                  <span className="text-xl font-bold tracking-tight text-gray-900">${localFilters.priceRange[1]}</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <Separator className="my-4" />
-
           {/* Colors */}
           {colors.length > 0 && (
-            <>
-              <div className="mb-6">
-                <h3 className="font-medium mb-3">Colors</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {colors.map(color => (
-                    <div key={color} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`color-${color}`}
-                        checked={localFilters.colors.includes(color)}
-                        onCheckedChange={(checked) => handleColorChange(color, checked as boolean)}
-                      />
-                      <Label htmlFor={`color-${color}`} className="text-sm capitalize">
-                        {color}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
+            <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-400">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-black/30 mb-6">Palette</h3>
+              <div className="flex flex-wrap gap-3">
+                {colors.map(color => {
+                  const isChecked = localFilters.colors.includes(color);
+                  return (
+                    <button
+                      key={color}
+                      onClick={() => handleColorChange(color, !isChecked)}
+                      className={`h-10 px-4 rounded-xl text-sm font-medium border transition-all duration-300 ${isChecked
+                        ? 'bg-black text-white border-black shadow-lg shadow-black/20'
+                        : 'bg-white text-gray-600 border-black/5 hover:border-black/20'
+                        }`}
+                    >
+                      {color}
+                    </button>
+                  );
+                })}
               </div>
-              <Separator className="my-4" />
-            </>
+            </div>
           )}
 
           {/* Sizes */}
           {sizes.length > 0 && (
-            <>
-              <div className="mb-6">
-                <h3 className="font-medium mb-3">Sizes</h3>
-                <div className="grid grid-cols-3 gap-2">
-                  {sizes.map(size => (
-                    <div key={size} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`size-${size}`}
-                        checked={localFilters.sizes.includes(size)}
-                        onCheckedChange={(checked) => handleSizeChange(size, checked as boolean)}
-                      />
-                      <Label htmlFor={`size-${size}`} className="text-sm">
-                        {size}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
+            <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-black/30 mb-6">Size</h3>
+              <div className="grid grid-cols-3 gap-2">
+                {sizes.map(size => {
+                  const isChecked = localFilters.sizes.includes(size);
+                  return (
+                    <button
+                      key={size}
+                      onClick={() => handleSizeChange(size, !isChecked)}
+                      className={`h-12 rounded-xl text-xs font-bold transition-all duration-300 border ${isChecked
+                        ? 'bg-black text-white border-black'
+                        : 'bg-white text-gray-400 border-black/5 hover:border-black/20'
+                        }`}
+                    >
+                      {size}
+                    </button>
+                  );
+                })}
               </div>
-              <Separator className="my-4" />
-            </>
+            </div>
           )}
 
-          {/* Rating Filter */}
-          <div className="mb-6">
-            <h3 className="font-medium mb-3">Minimum Rating</h3>
+          {/* Rating */}
+          <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-[600ms]">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-black/30 mb-6">Review</h3>
             <RadioGroup
               value={localFilters.rating.toString()}
               onValueChange={(value) => {
@@ -310,27 +333,30 @@ const FilterSidebar = ({ isOpen, onClose, onFiltersChange, currentFilters }: Fil
                 setLocalFilters(newFilters);
                 onFiltersChange(newFilters);
               }}
+              className="gap-3"
             >
               {[4, 3, 2, 1].map(rating => (
-                <div key={rating} className="flex items-center space-x-2">
-                  <RadioGroupItem value={rating.toString()} id={`rating-${rating}`} />
-                  <Label htmlFor={`rating-${rating}`} className="text-sm">
+                <div key={rating} className="flex items-center justify-between group cursor-pointer">
+                  <Label htmlFor={`rating-${rating}`} className="text-base font-medium text-gray-700 cursor-pointer group-hover:text-black">
                     {rating}+ Stars
                   </Label>
+                  <RadioGroupItem value={rating.toString()} id={`rating-${rating}`} className="border-black/10 text-black" />
                 </div>
               ))}
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="0" id="rating-0" />
-                <Label htmlFor="rating-0" className="text-sm">All Ratings</Label>
+              <div className="flex items-center justify-between group cursor-pointer">
+                <Label htmlFor="rating-0" className="text-base font-medium text-gray-700 cursor-pointer group-hover:text-black">All Ratings</Label>
+                <RadioGroupItem value="0" id="rating-0" className="border-black/10 text-black" />
               </div>
             </RadioGroup>
           </div>
 
-          <Separator className="my-4" />
-
-          {/* In Stock Filter */}
-          <div className="mb-6">
-            <div className="flex items-center space-x-2">
+          {/* In Stock */}
+          <div className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-[700ms]">
+            <div className="flex items-center justify-between p-6 bg-black/[0.02] rounded-3xl border border-black/[0.03]">
+              <div className="space-y-0.5">
+                <Label htmlFor="in-stock" className="text-base font-bold text-gray-900">Availability</Label>
+                <p className="text-xs font-medium text-gray-400 text-nowrap">Show in-stock only</p>
+              </div>
               <Checkbox
                 id="in-stock"
                 checked={localFilters.inStock}
@@ -339,10 +365,8 @@ const FilterSidebar = ({ isOpen, onClose, onFiltersChange, currentFilters }: Fil
                   setLocalFilters(newFilters);
                   onFiltersChange(newFilters);
                 }}
+                className="h-6 w-6 rounded-full border-black/10 data-[state=checked]:bg-black data-[state=checked]:border-black"
               />
-              <Label htmlFor="in-stock" className="text-sm">
-                In Stock Only
-              </Label>
             </div>
           </div>
         </div>

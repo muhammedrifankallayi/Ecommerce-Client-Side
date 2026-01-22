@@ -71,7 +71,7 @@ const CheckoutPage = () => {
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const[ userDetails, setUserDetails] = useState<User>(null);
+  const [userDetails, setUserDetails] = useState<User>(null);
 
   useEffect(() => {
     addressService.getAddresses().then(setAddresses);
@@ -100,22 +100,35 @@ const CheckoutPage = () => {
   }, [selectedAddressId, addresses, user]);
 
   // Calculate order summary
-  const computedSubtotal = cartItems.reduce((sum, item) => 
+  const computedSubtotal = cartItems.reduce((sum, item) =>
     sum + ((item?.inventoryId?.price ?? 0) * (item?.quantity ?? 1)), 0
   );
   const shipping = computedSubtotal > 50 ? 0 : 5.99;
-  let discountAmount = 0
-  const coupenActive = userDetails?.discountCoupons?.find(c => c.status === 'active');
-  couponService.getCouponById(coupenActive?.couponId).then((response) => {
-    if (response) {
-      const coupon = response;
-      if (coupon.discountType === 'percentage') {
-         discountAmount = (computedSubtotal * coupon.discountValue) / 100;
-      } else if (coupon.discountType === 'fixed') {
-        discountAmount = coupon.discountValue;
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
+  const [activeCoupon, setActiveCoupon] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchDiscount = async () => {
+      const coupenActive = userDetails?.discountCoupons?.find(c => c.status === 'active');
+      if (coupenActive?.couponId) {
+        try {
+          const coupon = await couponService.getCouponById(coupenActive.couponId);
+          if (coupon) {
+            setActiveCoupon(coupon);
+            if (coupon.discountType === 'percentage') {
+              setDiscountAmount((computedSubtotal * coupon.discountValue) / 100);
+            } else if (coupon.discountType === 'fixed') {
+              setDiscountAmount(coupon.discountValue);
+            }
+          }
+        } catch (err) {
+          console.error("Error fetching checkout coupon:", err);
+        }
       }
-    }
-  });
+    };
+    fetchDiscount();
+  }, [userDetails, computedSubtotal]);
+
   const total = computedSubtotal + shipping - discountAmount;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -174,7 +187,7 @@ const CheckoutPage = () => {
             }));
 
             // Build shipping address
-            const country = selectedAddressId 
+            const country = selectedAddressId
               ? addresses.find(a => a._id === selectedAddressId)?.address.country || "India"
               : "India";
 
@@ -199,8 +212,8 @@ const CheckoutPage = () => {
               paymentMethod: "razorpay",
               taxPrice: 0,
               shippingPrice: parseFloat(shipping.toFixed(2)),
-              totalPrice: parseFloat((computedSubtotal + shipping).toFixed(2)),
-              coupenId:coupenActive?.couponId,
+              totalPrice: parseFloat((computedSubtotal + shipping - discountAmount).toFixed(2)),
+              coupenId: activeCoupon?._id,
               discountAmount: discountAmount,
             };
 
@@ -208,7 +221,7 @@ const CheckoutPage = () => {
             if (!orderResponse.success || !orderResponse.data) {
               throw new Error('Failed to create order');
             }
-            
+
             // Verify payment
             await axios.post(
               `${BASE_URL}/api/orders/payments/verify`,

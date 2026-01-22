@@ -52,7 +52,7 @@ const RegisterPage = () => {
         email: data.email,
         password: data.password,
       };
-      
+
       const response = await authService.register(registerData);
       if (response.success) {
         // Navigate to verification success page with email parameter
@@ -77,7 +77,7 @@ const RegisterPage = () => {
           <CardHeader className="space-y-2 text-center">
             <CardTitle className="text-2xl font-bold gradient-text">Create Account</CardTitle>
             <CardDescription className="text-muted-foreground">
-              Join EcoShop and start your sustainable shopping journey
+              Join E-Devarcus and start your shopping journey
             </CardDescription>
           </CardHeader>
           <CardContent>
