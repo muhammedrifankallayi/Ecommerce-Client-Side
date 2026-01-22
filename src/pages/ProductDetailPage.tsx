@@ -142,7 +142,6 @@ const ProductDetailPage = () => {
         if (productData.category?._id) {
           const relatedProducts = await productService.getProducts({
             category: productData.category._id,
-            limit: 4
           });
           setRelatedProducts(relatedProducts.products.filter(p => p._id !== id));
         }
@@ -340,15 +339,15 @@ const ProductDetailPage = () => {
                   const isAvailable = matchingInventory && matchingInventory.stock > 0;
                   
                   return (
-                    <Badge
+                    <div
                       key={value}
-                      variant={isSelected ? "default" : "outline"}
-                      className={`cursor-pointer ${!isAvailable ? 'opacity-50' : ''} ${isSelected ? 'bg-shop-primary' : ''}`}
+                      style={{padding: '6px 12px',display: 'inline-flex', alignItems: 'center', borderRadius: '1px', border: isSelected ? '1px solid #1b181eff' : '1px solid #d1d5db', backgroundColor: isSelected ? '#ede9fe' : '#f9fafb', color: isAvailable ? (isSelected ? '#3a85edff' : '#374151') : '#9ca3af', cursor: isAvailable ? 'pointer' : 'not-allowed'}}
+                      className={`cursor-pointer ${!isAvailable ? 'opacity-50' : ''} `}
                       onClick={() => isAvailable && handleVariantSelect(variant.type, value)}
                     >
                       {value}
                       {isSelected && <Check className="ml-1 h-3 w-3" />}
-                    </Badge>
+                    </div>
                   );
                 })}
               </div>
@@ -360,7 +359,7 @@ const ProductDetailPage = () => {
             <p className="text-sm mb-4">
               {selectedInventory.stock > 0 ? (
                 <span className="text-green-600">
-                  In Stock ({selectedInventory.stock} available)
+                  In Stock 
                 </span>
               ) : (
                 <span className="text-red-600">Out of Stock</span>

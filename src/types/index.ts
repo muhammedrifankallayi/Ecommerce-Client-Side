@@ -46,6 +46,8 @@ export interface Product {
   slug?: string;
   rating?: number;
   totalStock?:number
+  averageRating?: number;
+  totalReviews?: number;
 }
 
 export interface ProductWithInventory extends Product {

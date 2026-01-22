@@ -1,42 +1,47 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import ProductCard from './ProductCard';
-import { Product } from '@/types';
+import { Product, Category } from '@/types';
 import { ArrowRight, Filter, Loader2 } from 'lucide-react';
 import { landingUiService } from '@/services/landingUiService';
+import { CategoryService } from '@/services/categoryService';
 
 const FeaturedProducts = ({featuredProducts}) => {
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('all');
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  const categories = [
-    { id: 'all', name: 'All Products' },
-    { id: 'formal', name: 'Formal Wear' },
-    { id: 'casual', name: 'Casual' },
-    { id: 'accessories', name: 'Accessories' },
-    { id: 'shoes', name: 'Footwear' }
+
+  // Add "All Products" to the beginning of categories
+  const allCategories = [
+    { _id: 'all', name: 'All Products' },
+    ...categories
   ];
 
-  // Fetch featured products
-    useEffect(() => {
-        const fetchCategories = async () => {
-            try {
-                const response = await landingUiService.getLandingUi();
-                
-                setProducts(response.data.featuredProducts);
-                setLoading(false);
-            } catch (error) {
-                console.error("Error fetching categories:", error);
-                setLoading(false);
-            }
-        };
+  // Fetch featured products and categories
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [uiResponse, categoriesResponse] = await Promise.all([
+          landingUiService.getLandingUi(),
+          new CategoryService().getCategories()
+        ]);
+        
+        setProducts(uiResponse.data.featuredProducts);
+        setCategories(categoriesResponse);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setError("Failed to load data. Please try again.");
+        setLoading(false);
+      }
+    };
 
-        fetchCategories();
-    }
-    , []);
+    fetchData();
+  }, []);
 
   const filteredProducts = products.slice(0, 8)
 
@@ -59,16 +64,21 @@ const FeaturedProducts = ({featuredProducts}) => {
 
         {/* Category Filters */}
         <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-8 sm:mb-12 px-4 sm:px-0">
-          {categories.map((category) => (
+          {allCategories.map((category) => (
             <Button
-              key={category.id}
-              variant={activeCategory === category.id ? 'default' : 'outline'}
+              key={category._id}
+              variant={activeCategory === category._id ? 'default' : 'outline'}
               className={`px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm rounded-full transition-all duration-300 ${
-                activeCategory === category.id
+                activeCategory === category._id
                   ? 'bg-primary text-white shadow-lg scale-105'
                   : 'hover:scale-105 glass-card'
               }`}
-              onClick={() => setActiveCategory(category.id)}
+              onClick={() => {
+                setActiveCategory(category._id);
+                if (category._id !== 'all') {
+                  navigate(`/products?category=${category._id}`);
+                }
+              }}
             >
               {category.name}
             </Button>

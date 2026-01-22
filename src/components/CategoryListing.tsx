@@ -36,6 +36,7 @@ const CategoryListing = ({category}) => {
           {categories.map((category) => (
             <div
               key={category._id}
+              onClick={()=> window.location.href = `/products?category=${category._id}`}
               className="relative h-72 cursor-pointer group overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl"
             >
               {/* Background image */}
