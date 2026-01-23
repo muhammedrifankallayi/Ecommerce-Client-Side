@@ -5,6 +5,7 @@ import StatsSection from '@/components/StatsSection';
 import TestimonialsSection from '@/components/TestimonialsSection';
 import NewsletterSection from '@/components/NewsletterSection';
 import CategoryListing from '@/components/CategoryListing';
+import LandingSections from '@/components/LandingSections';
 import { landingUiService } from '@/services/landingUiService';
 import { useEffect, useState } from 'react';
 
@@ -12,6 +13,8 @@ const HomePage = () => {
 
   const [categories, setCategories] = useState([]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [sections, setSections] = useState([]);
+  const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,6 +25,8 @@ const HomePage = () => {
         if (response.success && response.data) {
           setCategories(response.data.categories || []);
           setFeaturedProducts(response.data.featuredProducts || []);
+          setSections(response.data.sections || []);
+          setBanners(response.data.banners || []);
         }
       } catch (error) {
         console.error("Error fetching landing data:", error);
@@ -35,11 +40,15 @@ const HomePage = () => {
 
   return (
     <div className="w-full overflow-hidden">
-      <ModernHero />
+      <ModernHero banners={banners} />
       <StatsSection />
 
       {categories && categories.length > 0 && (
         <CategoryListing category={categories} />
+      )}
+
+      {sections && sections.length > 0 && (
+        <LandingSections sections={sections} />
       )}
 
       {featuredProducts && featuredProducts.length > 0 && (

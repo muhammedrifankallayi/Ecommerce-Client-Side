@@ -7,9 +7,11 @@ export interface LandingUiResponse {
     data: {
         categories: Category[];
         featuredProducts: Product[];
+        sections?: any[];
+        banners?: any[];
     },
     success: boolean;
-    }
+}
 
 
 

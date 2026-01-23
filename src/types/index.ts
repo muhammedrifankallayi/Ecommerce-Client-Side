@@ -43,9 +43,10 @@ export interface Product {
   createdAt: string;
   updatedAt: string;
   isActive?: boolean;
+  isFeatured?: boolean;
   slug?: string;
   rating?: number;
-  totalStock?:number
+  totalStock?: number
   averageRating?: number;
   totalReviews?: number;
 }

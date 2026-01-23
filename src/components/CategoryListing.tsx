@@ -11,34 +11,30 @@ const CategoryListing = ({ category: categories }: { category: any[] }) => {
 
 
   return (
-    <div className="min-h-screen bg-gray-100 p-2">
+    <div className="bg-gray-50/50 py-12 px-2">
       <div className="max-w-7xl mx-auto">
-        {/* <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">Categories</h1> */}
-
-        <div className="grid grid-cols-2 gap-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {categories.map((category) => (
             <div
               key={category._id}
               onClick={() => window.location.href = `/products?category=${category._id}`}
-              className="relative h-72 cursor-pointer group overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl"
+              className="relative aspect-[16/10] cursor-pointer group overflow-hidden rounded-2xl transition-all duration-500 hover:shadow-2xl"
             >
               {/* Background image */}
               <img
                 src={BASE_URL + category.image}
                 alt={category.name}
-                className="absolute inset-0 w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
 
               {/* Gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/60"></div>
-              {/* Background blur overlay on hover */}
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 group-hover:backdrop-blur-sm transition-all duration-300"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500"></div>
 
-              {/* Category name - centered */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <h1 className=" text-4xl text-purple-500 text-2xl font-bold drop-shadow-lg group-hover:text-purple-300 transition-colors duration-300 text-center px-4">
+              {/* Category name - positioned at bottom for better "fit" feel */}
+              <div className="absolute inset-x-0 bottom-0 p-6 flex flex-col justify-end">
+                <h3 className="text-2xl font-black text-white tracking-tight drop-shadow-md group-hover:translate-x-2 transition-transform duration-500">
                   {category.name}
-                </h1>
+                </h3>
               </div>
 
               {/* Explore button on hover */}
