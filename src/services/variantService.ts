@@ -3,7 +3,7 @@ import { ENDPOINTS } from './config';
 import { VariantInfo } from '@/types';
 import { ApiResponse, PaginatedResponse } from '@/types/api';
 
-export interface VariantResponse extends ApiResponse<VariantInfo> {}
+export interface VariantResponse extends ApiResponse<VariantInfo> { }
 export interface VariantsResponse extends ApiResponse<{
   data: VariantInfo[];
   pagination: {
@@ -12,7 +12,7 @@ export interface VariantsResponse extends ApiResponse<{
     total: number;
     pages: number;
   };
-}> {}
+}> { }
 
 export interface CreateVariantDto {
   name: string;
@@ -22,6 +22,7 @@ export interface CreateVariantDto {
 
 export class VariantService {
   private basePath = ENDPOINTS.variants;
+  private publicPath = "/api/public/variants";
 
   async getVariants(params?: {
     page?: number;
@@ -37,12 +38,12 @@ export class VariantService {
         }
       });
     }
-    const endpoint = `${this.basePath}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const endpoint = `${this.publicPath}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return apiService.get(endpoint);
   }
 
   async getVariantById(id: string): Promise<VariantResponse> {
-    return apiService.get(`${this.basePath}/${id}`);
+    return apiService.get(`${this.publicPath}/${id}`);
   }
 
   async createVariant(data: CreateVariantDto): Promise<VariantResponse> {

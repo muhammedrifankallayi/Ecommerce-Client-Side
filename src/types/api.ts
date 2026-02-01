@@ -78,6 +78,7 @@ export interface ProductFilters {
   sort?: string;
   inStock?: boolean;
   active?: number; // 1 for active, 0 for inactive
+  isFeatured?: boolean;
 }
 
 export interface OrderFilters {

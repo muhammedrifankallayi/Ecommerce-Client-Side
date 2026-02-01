@@ -51,9 +51,8 @@ export class ProductService {
   }
 
   async getFeaturedProducts(): Promise<Product[]> {
-    // No public endpoint for featured, fallback to private
-    const response = await apiService.get<{ products: Product[] }>(`${this.basePath}/featured`);
-    return response.products;
+    const response = await this.getProducts({ isFeatured: true });
+    return response.data?.products || response.products || [];
   }
 
   async searchProducts(query: string): Promise<Product[]> {
