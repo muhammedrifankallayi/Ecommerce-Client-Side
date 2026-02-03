@@ -5,7 +5,7 @@ import { ApiResponse, PaginatedResponse } from '@/types/api';
 
 export interface VariantResponse extends ApiResponse<VariantInfo> { }
 export interface VariantsResponse extends ApiResponse<{
-  data: VariantInfo[];
+  variants: VariantInfo[];
   pagination: {
     page: number;
     limit: number;

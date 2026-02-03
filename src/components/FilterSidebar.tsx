@@ -60,8 +60,8 @@ const FilterSidebar = ({ isOpen, onClose, onFiltersChange, currentFilters }: Fil
         setBrands(brandsData);
 
         // Extract colors and sizes from variants
-        if (variantsData.success && variantsData.data?.data) {
-          const allVariants = variantsData.data.data;
+        if (variantsData.success && variantsData.data?.variants) {
+          const allVariants = variantsData.data.variants;
 
           const colorVariant = allVariants.find(v => v.type.toLowerCase() === 'color' || v.name.toLowerCase() === 'color');
           if (colorVariant && (colorVariant as any).values) {
